@@ -126,7 +126,7 @@ app.get('/api/gallery', async (req, res) => {
     res.status(200).json(gallery);
   } catch (error) {
     console.error('Error fetching cards:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error' })
   }
 });
 
