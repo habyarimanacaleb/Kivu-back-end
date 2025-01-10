@@ -21,12 +21,12 @@ mongoose.connect(process.env.MONGO_URI)
 app.use(cors());
 app.use(bodyParser.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/uploads/gallery', express.static(path.join(__dirname, 'uploads/gallery')));
+// app.use('/uploads/gallery', express.static(path.join(__dirname, 'uploads/gallery')));
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'uploads');
-    cb(null, 'uploads/gallery');
+    // cb(null, 'uploads/gallery');
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
@@ -90,7 +90,7 @@ app.post('/api/gallery', upload.single('imageFile'), async (req, res) => {
     }
 
     // Construct the image URL
-    const imageUrl = `http://localhost:${PORT}/uploads/gallery/${req.file.filename}`;
+    const imageUrl = `http://localhost:${PORT}/uploads/${req.file.filename}`;
 
     // Create and save the new photo
     const newPhoto = new Photo({
