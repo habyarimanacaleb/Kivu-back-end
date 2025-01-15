@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const mongoose = require('mongoose');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const galleryRoutes = require('./routes/galleryRoutes');
 const cardsRoutes = require('./routes/cardsRoutes');
 const ibirwaClientsRoutes = require('./routes/ibirwaClientsRoutes');
@@ -22,11 +23,15 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Configure session
+//Configure session with connect-mongo
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'ibirwa as secrete',
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: true,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI,
+    collectionName: 'sessions'
+  }),
   cookie: { secure: false } // Set to true if using HTTPS
 }));
 
