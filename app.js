@@ -3,8 +3,10 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
 const mongoose = require('mongoose');
+const session = require('express-session');
 const galleryRoutes = require('./routes/galleryRoutes');
 const cardsRoutes = require('./routes/cardsRoutes');
+const ibirwaClientsRoutes = require('./routes/ibirwaClientsRoutes');
 require('dotenv').config();
 
 const app = express();
@@ -19,12 +21,24 @@ mongoose.connect(process.env.MONGO_URI)
 app.use(cors());
 app.use(bodyParser.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-// Log the imported routes to verify they are valid
-        // console.log('Gallery Routes:', galleryRoutes);
-        // console.log('Cards Routes:', cardsRoutes);
+
+// Configure session
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'ibirwa as secrete',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false } // Set to true if using HTTPS
+}));
+
 // Routes
 app.use('/api', galleryRoutes);
 app.use('/api', cardsRoutes);
+app.use('/api/ibirwa-clients', ibirwaClientsRoutes);
+
+app.get('/dashboard', (req, res) => {
+  res.send('Welcome to the Ibirwa API');
+});
+
 //Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
