@@ -4,13 +4,7 @@ const fs = require('fs');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    let folder = 'uploads';
-    if (req.baseUrl.includes('gallery')) {
-      folder = 'uploads/gallery';
-    } else if (req.baseUrl.includes('cards')) {
-      folder = 'uploads/cards';
-    }
-
+    const folder = path.join(__dirname, '../uploads/gallery');
     // Create the directory if it does not exist
     if (!fs.existsSync(folder)) {
       fs.mkdirSync(folder, { recursive: true });
@@ -23,6 +17,6 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+const uploadPhotoImages = multer({ storage });
 
-module.exports = upload;
+module.exports = uploadPhotoImages;

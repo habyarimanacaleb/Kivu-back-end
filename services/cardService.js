@@ -1,7 +1,7 @@
 const Card = require('../models/cards');
 
 exports.createCard = async (title, description, detailPage, filename) => {
-  const imageUrl = `/uploads/${filename}`;
+  const imageUrl = `/uploads/cards/${filename}`;
   const newCard = new Card({
     title,
     description,
