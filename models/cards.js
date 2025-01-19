@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const gallerySchema = new mongoose.Schema({
+const CardServiceSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String,required: true },
   imageUrl: { type: String , required: true},
@@ -8,4 +8,4 @@ const gallerySchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-module.exports = mongoose.model('Gallery', gallerySchema);
+module.exports = mongoose.model('CardServices', CardServiceSchema);
