@@ -2,11 +2,11 @@ const photoService = require('../services/photoService');
 
 exports.createGalleryCard = async (req, res) => {
   try {
-    const { title, description } = req.body;
+    const {title} = req.body;
 
     // Validate required fields
-    if (!title || !description) {
-      return res.status(400).json({ message: 'Title and description are required.' });
+    if (!title) {
+      return res.status(400).json({ message: 'Title is required.' });
     }
 
     // Validate uploaded file
@@ -15,7 +15,7 @@ exports.createGalleryCard = async (req, res) => {
     }
 
     // Save the photo information to the database using the service
-    const newPhoto = await photoService.createPhoto(title, description, req.file.filename);
+    const newPhoto = await photoService.createPhoto(title,req.file.filename);
 
     res.status(201).json({ message: 'Photo created successfully', photo: newPhoto });
   } catch (error) {
