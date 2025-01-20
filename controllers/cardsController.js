@@ -17,6 +17,8 @@ exports.createCard = async (req, res) => {
     // Save the card information to the database using the service
     const newCard = await cardService.createCard(title, description, detailPage, req.file.filename);
 
+    console.log('New Card:', newCard); // Debugging statement
+
     res.status(201).json({ message: 'Card created successfully', card: newCard });
   } catch (error) {
     console.error('Error creating card:', error);

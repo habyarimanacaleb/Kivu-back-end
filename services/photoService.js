@@ -1,16 +1,18 @@
-const Photo = require('../models/galleryModel');
+const Photo = require('../models/photo');
 
-exports.createPhoto = async (title, filename) => {
-  const photo = new Photo({
+exports.createPhoto = async (title, description, filename) => {
+  const imageUrl = `/uploads/gallery/${filename}`;
+  const newPhoto = new Photo({
     title,
-    imagePath: `/uploads/gallery/${filename}`
+    description,
+    imageUrl,
   });
 
-  await photo.save();
-  return photo;
+  await newPhoto.save();
+  return newPhoto;
 };
 
 exports.getAllPhotos = async () => {
-  const gallery = await Photo.find();
-  return gallery;
+  const photos = await Photo.find();
+  return photos;
 };

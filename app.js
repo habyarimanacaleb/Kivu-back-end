@@ -1,53 +1,29 @@
 const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const path = require('path');
 const mongoose = require('mongoose');
-const session = require('express-session');
-const MongoStore = require('connect-mongo');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const path = require('path');
+const cardRoutes = require('./routes/cardRoutes');
 const galleryRoutes = require('./routes/galleryRoutes');
-const cardsRoutes = require('./routes/cardsRoutes');
 const ibirwaClientsRoutes = require('./routes/ibirwaClientsRoutes');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB connected'))
+app.use(bodyParser.json());
+app.use(cors());
+app.use('/public', express.static('public'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/cardsDB', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// Middleware
-app.use(cors());
-app.use(bodyParser.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-//Configure session with connect-mongo
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: true,
-  store: MongoStore.create({
-    mongoUrl: process.env.MONGO_URI,
-    collectionName: 'sessions'
-  }),
-  cookie: { secure: false } // Set to true if using HTTPS
-}));
-
-// Routes
-app.use('/api', galleryRoutes);
-app.use('/api', cardsRoutes);
+app.use('/api/cards', cardRoutes);
+app.use('/api/gallery', galleryRoutes);
 app.use('/api/ibirwa-clients', ibirwaClientsRoutes);
 
-app.get('/dashboard', (req, res) => {
-  res.send('Welcome to the Ibirwa API');
-});
-
-//Global error handler
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
-});
-
-// Start the server
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));

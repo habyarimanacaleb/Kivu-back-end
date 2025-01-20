@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const upload = require('../middleware/uploadgalleryImages');
+const uploadPhotoImages = require('../middleware/uploadgalleryImages');
 const galleryController = require('../controllers/galleryController');
 
-router.post('/gallery', upload.single('imageFile'), galleryController.createGalleryCard);
+router.post('/gallery', uploadPhotoImages.single('imageFile'), galleryController.createGalleryCard);
 router.get('/gallery', galleryController.getAllPhotos);
 
 module.exports = router;

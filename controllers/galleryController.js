@@ -2,11 +2,11 @@ const photoService = require('../services/photoService');
 
 exports.createGalleryCard = async (req, res) => {
   try {
-    const { title } = req.body;
+    const { title, description } = req.body;
 
     // Validate required fields
-    if (!title) {
-      return res.status(400).json({ message: 'Title field is required.' });
+    if (!title || !description) {
+      return res.status(400).json({ message: 'Title and description are required.' });
     }
 
     // Validate uploaded file
@@ -15,22 +15,19 @@ exports.createGalleryCard = async (req, res) => {
     }
 
     // Save the photo information to the database using the service
-    const photo = await photoService.createPhoto(title, req.file.filename);
+    const newPhoto = await photoService.createPhoto(title, description, req.file.filename);
 
-    res.status(201).json(photo);
+    res.status(201).json({ message: 'Photo created successfully', photo: newPhoto });
   } catch (error) {
-    console.error('Error creating gallery card:', error);
+    console.error('Error creating photo:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
 exports.getAllPhotos = async (req, res) => {
   try {
-    const gallery = await photoService.getAllPhotos();
-    if (!gallery) {
-      return res.status(404).json({ message: 'Gallery not found' });
-    }
-    res.status(200).json(gallery);
+    const photos = await photoService.getAllPhotos();
+    res.status(200).json(photos);
   } catch (error) {
     console.error('Error fetching photos:', error);
     res.status(500).json({ message: 'Server error' });
