@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
 exports.signup = async (req, res) => {
   try {
     const { email, userName, password, role } = req.body;
-    if (!email || !userName || !password) {
+    if (!email || !userName || !password || !role) {
       return res
         .status(400)
         .json({ message: "Email, userName, password are required." });
@@ -36,9 +36,8 @@ exports.signup = async (req, res) => {
       email,
       userName,
       password: hashedPassword,
-      isConfirmed: false, // Add a field to track email confirmation
+      isConfirmed: false,
     });
-    await newUser.save();
 
     // Generate a confirmation token
     const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
@@ -63,6 +62,8 @@ exports.signup = async (req, res) => {
       }
       console.log("Confirmation email sent:", info.response);
     });
+
+    await newUser.save();
 
     res.status(201).json({
       message:
