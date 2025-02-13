@@ -14,19 +14,17 @@ const transporter = nodemailer.createTransport({
 exports.signup = async (req, res) => {
   try {
     const { email, userName, password, role } = req.body;
-
-    // Validate required fields
     if (!email || !userName || !password) {
       return res
         .status(400)
-        .json({ message: "Email, userName and password are required." });
+        .json({ message: "Email, userName, password are required." });
     }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res
         .status(400)
-        .json({ message: "User with this email already exists" });
+        .json({ message: "User already exists with that email or userName" });
     }
 
     // Hash the password
@@ -38,10 +36,10 @@ exports.signup = async (req, res) => {
       email,
       userName,
       password: hashedPassword,
-      role,
-      isConfirmed: false,
+      isConfirmed: false, // Add a field to track email confirmation
     });
     await newUser.save();
+
     // Generate a confirmation token
     const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
@@ -49,7 +47,6 @@ exports.signup = async (req, res) => {
 
     // Send confirmation email
     const confirmationUrl = `http://localhost:5000/api/ibirwa-clients/confirm/${token}`;
-
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: newUser.email,
@@ -69,12 +66,12 @@ exports.signup = async (req, res) => {
 
     res.status(201).json({
       message:
-        "User signed successfully. Please check your email to confirm your account.",
+        "User signed up successfully. Please check your email to confirm your account.",
       user: newUser,
     });
   } catch (error) {
     console.error("Error signing up user:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
@@ -85,6 +82,8 @@ exports.confirmEmail = async (req, res) => {
     // Verify the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userId = decoded.userId;
+
+    // Find the user and update the isConfirmed field
     const user = await User.findById(userId);
     if (!user) {
       return res.status(400).json({ message: "Invalid token" });
@@ -96,7 +95,7 @@ exports.confirmEmail = async (req, res) => {
     res.status(200).json({ message: "Email confirmed successfully" });
   } catch (error) {
     console.error("Error confirming email:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
@@ -142,7 +141,7 @@ exports.login = async (req, res) => {
       .json({ message: "User logged in successfully", token, user });
   } catch (error) {
     console.error("Error logging in user:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
