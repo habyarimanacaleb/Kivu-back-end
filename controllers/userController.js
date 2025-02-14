@@ -56,7 +56,7 @@ exports.signup = async (req, res) => {
     });
 
     // Send confirmation email
-    const confirmationUrl = `https://g-back-end-zhq1.onrender.com/api/ibirwa-clients/confirm/${token}`;
+    const confirmationUrl = `${process.env.BASE_URL}/api/ibirwa-clients/confirm/${token}`;
     const mailOptions = {
       from: `"Kivu Service" <${process.env.SMTP_USER}>`,
       to: newUser.email,
