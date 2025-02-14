@@ -1,26 +1,35 @@
+// User Controller
+require("dotenv").config();
 const User = require("../models/userModel");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  service: "Gmail",
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  secure: process.env.SMTP_SECU || true, // Use SSL
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false,
   },
 });
 
 exports.signup = async (req, res) => {
   try {
     const { email, userName, password, role } = req.body;
+
+    // Validate required fields
     if (!email || !userName || !password || !role) {
       return res
         .status(400)
-        .json({ message: "Email, userName, password are required." });
+        .json({ message: "Email, userName, password, and role are required." });
     }
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({}).or([{ email }, { userName }]);
     if (existingUser) {
       return res
         .status(400)
@@ -36,8 +45,10 @@ exports.signup = async (req, res) => {
       email,
       userName,
       password: hashedPassword,
-      isConfirmed: false,
+      role,
+      isConfirmed: false, // Add a field to track email confirmation
     });
+    await newUser.save();
 
     // Generate a confirmation token
     const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
@@ -45,12 +56,12 @@ exports.signup = async (req, res) => {
     });
 
     // Send confirmation email
-    const confirmationUrl = `http://localhost:5000/api/ibirwa-clients/confirm/${token}`;
+    const confirmationUrl = `https://g-back-end-zhq1.onrender.com/api/ibirwa-clients/confirm/${token}`;
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: `"Kivu Service" <${process.env.SMTP_USER}>`,
       to: newUser.email,
       subject: "Email Confirmation",
-      text: `Please confirm your email by clicking the following link: ${confirmationUrl}`,
+      text: `Confirm your email by clicking this link: ${confirmationUrl}`,
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
@@ -61,17 +72,14 @@ exports.signup = async (req, res) => {
           .json({ message: "Error sending confirmation email" });
       }
       console.log("Confirmation email sent:", info.response);
-    });
-
-    await newUser.save();
-
-    res.status(201).json({
-      message:
-        "User signed up successfully. Please check your email to confirm your account.",
-      user: newUser,
+      res.status(201).json({
+        message:
+          "User signed up successfully. Please check your email to confirm your account.",
+        user: newUser,
+      });
     });
   } catch (error) {
-    console.error("Error signing up user:", error);
+    console.error("Signup error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
