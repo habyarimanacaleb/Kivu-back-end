@@ -4,11 +4,12 @@ const User = require("../models/userModel");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: process.env.SMTP_PORT,
-  secure: process.env.SMTP_SECU || true, // Use SSL
+  secure: process.env.SMTP_SECURE === "true", // Use SSL
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -61,7 +62,9 @@ exports.signup = async (req, res) => {
       from: `"Kivu Service" <${process.env.SMTP_USER}>`,
       to: newUser.email,
       subject: "Email Confirmation",
-      text: `Confirm your email by clicking this link: ${confirmationUrl}`,
+      html: `<p>Dear ${userName},</p>
+          <p>Thank you for registering to our website.</p>
+          <p>Please click <a href='${confirmationUrl}'>Here</a> to confirm your account.</p>`,
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
@@ -88,11 +91,9 @@ exports.confirmEmail = async (req, res) => {
   try {
     const { token } = req.params;
 
-    // Verify the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userId = decoded.userId;
 
-    // Find the user and update the isConfirmed field
     const user = await User.findById(userId);
     if (!user) {
       return res.status(400).json({ message: "Invalid token" });
