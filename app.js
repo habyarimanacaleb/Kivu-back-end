@@ -1,18 +1,24 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
-const cors = require("cors");
 const path = require("path");
 const cardRoutes = require("./routes/cardRoutes");
 const galleryRoutes = require("./routes/galleryRoutes");
 const ibirwaClientsRoutes = require("./routes/ibirwaClientsRoutes");
 const contactRoutes = require("./routes/contactRoutes");
-require("dotenv").config();
-
 const app = express();
+const cors = require("cors");
+
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://your-frontend.com"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
 
 app.use(bodyParser.json());
-app.use(cors());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 mongoose
