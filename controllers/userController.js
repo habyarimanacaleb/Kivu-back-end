@@ -129,7 +129,6 @@ exports.login = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ message: "Incorrect Password" });
     }
-
     // Generate a token
     const token = jwt.sign(
       {
@@ -140,10 +139,8 @@ exports.login = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
-
     // Save the token in the session
-    req.session.token = token;
-
+    // req.session.token = token;
     res
       .status(200)
       .json({ message: "User logged in successfully", token, user });
