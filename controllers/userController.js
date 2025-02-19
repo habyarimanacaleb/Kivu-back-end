@@ -4,7 +4,7 @@ const User = require("../models/userModel");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
-const crypto = require("crypto");
+// const crypto = require("crypto");
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -21,16 +21,14 @@ const transporter = nodemailer.createTransport({
 
 exports.signup = async (req, res) => {
   try {
-    const { email, userName, password, role } = req.body;
-
-    // Validate required fields
-    if (!email || !userName || !password || !role) {
+    const { email, username, password, role } = req.body;
+    if (!email || !username || !password) {
       return res
         .status(400)
-        .json({ message: "Email, userName, password, and role are required." });
+        .json({ message: "Email, userName and password are required." });
     }
 
-    const existingUser = await User.findOne({}).or([{ email }, { userName }]);
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res
         .status(400)
@@ -44,7 +42,7 @@ exports.signup = async (req, res) => {
     // Create and save the new user
     const newUser = new User({
       email,
-      userName,
+      username,
       password: hashedPassword,
       role,
       isConfirmed: false, // Add a field to track email confirmation
@@ -57,12 +55,12 @@ exports.signup = async (req, res) => {
     });
 
     // Send confirmation email
-    const confirmationUrl = `${process.env.BASE_URL}/api/ibirwa-clients/confirm/${token}`;
+    const confirmationUrl = `${process.env.BASE_URL}/api/confirm-email/${token}`;
     const mailOptions = {
-      from: `"Kivu Service" <${process.env.SMTP_USER}>`,
+      from: `"Ibirwa Kivu Bike Tour Services" <${process.env.SMTP_USER}>`,
       to: newUser.email,
       subject: "Email Confirmation",
-      html: `<p>Dear ${userName},</p>
+      html: `<p>Dear ${username},</p>
           <p>Thank you for registering to our website.</p>
           <p>Please click <a href='${confirmationUrl}'>Here</a> to confirm your account.</p>`,
     };
@@ -137,7 +135,7 @@ exports.login = async (req, res) => {
       {
         userId: user._id,
         role: user.role,
-        userName: user.userName,
+        name: user.username,
       },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
