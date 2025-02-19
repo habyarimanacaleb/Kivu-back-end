@@ -12,7 +12,10 @@ const cors = require("cors");
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://your-frontend.com"],
+    origin: [
+      "http://localhost:5173",
+      "https://habyarimanacaleb.github.io/ibirwa-kivu-bike-tours",
+    ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
