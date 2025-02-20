@@ -10,6 +10,7 @@ router.delete("/users/:id", userController.deleteUser);
 router.put("/users/:id", userController.updateUser);
 router.get("/confirm-email/:token", userController.confirmEmail);
 router.get("/users", userController.getAllUsers);
+router.get("/session", userController.getSessionData);
 
 // Example of a restricted endpoint
 router.get("/restricted", verifyUserRole(["admin"]), userController.restricted);

@@ -4,8 +4,6 @@ const User = require("../models/userModel");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
-// const crypto = require("crypto");
-
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: process.env.SMTP_PORT,
@@ -18,7 +16,6 @@ const transporter = nodemailer.createTransport({
     rejectUnauthorized: false,
   },
 });
-
 exports.signup = async (req, res) => {
   try {
     const { email, username, password, role } = req.body;
@@ -84,7 +81,6 @@ exports.signup = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
 exports.confirmEmail = async (req, res) => {
   try {
     const { token } = req.params;
@@ -106,7 +102,6 @@ exports.confirmEmail = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -117,19 +112,14 @@ exports.login = async (req, res) => {
         .status(400)
         .json({ message: "Email and password are required." });
     }
-
-    // Find the user
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-
-    // Compare the password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Incorrect Password" });
     }
-    // Generate a token
     const token = jwt.sign(
       {
         userId: user._id,
@@ -140,7 +130,12 @@ exports.login = async (req, res) => {
       { expiresIn: "1h" }
     );
     // Save the token in the session
-    // req.session.token = token;
+    req.session.user = {
+      userId: user._id,
+      role: user.role,
+      username: user.username,
+      token: token,
+    };
     res
       .status(200)
       .json({ message: "User logged in successfully", token, user });
@@ -149,7 +144,6 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
 exports.deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -165,7 +159,6 @@ exports.deleteUser = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
 exports.updateUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -195,7 +188,6 @@ exports.updateUser = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await User.find({});
@@ -205,7 +197,39 @@ exports.getAllUsers = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+exports.getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
 
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ user });
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+exports.logout = (req, res) => {
+  try {
+    if (req.session) {
+      req.session.destroy((err) => {
+        if (err) {
+          return res.status(500).json({ message: "Error logging out" });
+        }
+      });
+    }
+
+    // If you're using JWT, you can clear the token on the client side
+    // You can also implement a token blacklist if needed
+    res.status(200).json({ message: "User logged out successfully" });
+  } catch (error) {
+    console.error("Error logging out:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 exports.logout = (req, res) => {
   // Destroy the session to log out the user
   req.session.destroy((err) => {
@@ -215,7 +239,18 @@ exports.logout = (req, res) => {
     res.status(200).json({ message: "User logged out successfully" });
   });
 };
+exports.getSessionData = (req, res) => {
+  try {
+    if (!req.session.user) {
+      return res.status(401).json({ message: "No active session" });
+    }
 
+    res.status(200).json({ user: req.session.user });
+  } catch (error) {
+    console.error("Error fetching session data:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 exports.restricted = (req, res) => {
   res.status(200).json({ message: "Access granted to restricted endpoint" });
 };
