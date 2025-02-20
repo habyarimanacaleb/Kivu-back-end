@@ -6,7 +6,10 @@ const verifyUserRole = require("../middleware/verifyUserRole");
 router.post("/signup", userController.signup);
 router.post("/login", userController.login);
 router.post("/logout", userController.logout);
-router.get("/confirm-email/:token", userController.confirmEmail); // Ensure this route is defined
+router.delete("/users/:id", userController.deleteUser);
+router.put("/users/:id", userController.updateUser);
+router.get("/confirm-email/:token", userController.confirmEmail);
+router.get("/users", userController.getAllUsers);
 
 // Example of a restricted endpoint
 router.get("/restricted", verifyUserRole(["admin"]), userController.restricted);
