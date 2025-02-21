@@ -9,13 +9,13 @@ const ibirwaClientsRoutes = require("./routes/ibirwaClientsRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const app = express();
 const cors = require("cors");
-const session = require("express-session");
 
 app.use(
   cors({
     origin: [
       "http://localhost:5173",
       "https://habyarimanacaleb.github.io/ibirwa-kivu-bike-tours",
+      "https://ibirwa-africa-bike-tours.netlify.app/",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
@@ -23,11 +23,11 @@ app.use(
 );
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "your-secret-key",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV,
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24, //(e.g., 1 day)
     },
