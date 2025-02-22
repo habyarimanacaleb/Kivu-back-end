@@ -1,40 +1,31 @@
-require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
+const cors = require("cors");
 const path = require("path");
+const fs = require("fs");
 const cardRoutes = require("./routes/cardRoutes");
 const galleryRoutes = require("./routes/galleryRoutes");
 const ibirwaClientsRoutes = require("./routes/ibirwaClientsRoutes");
 const contactRoutes = require("./routes/contactRoutes");
-const app = express();
-const cors = require("cors");
+const serviceRoutes = require("./routes/ServiceRoutes");
+require("dotenv").config();
 
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "https://habyarimanacaleb.github.io/ibirwa-kivu-bike-tours",
-      "https://ibirwa-africa-bike-tours.netlify.app/",
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-  })
-);
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV,
-      httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24, //(e.g., 1 day)
-    },
-  })
-);
+const app = express();
+
+// Ensure the public/uploads directory exists
+const publicDir = path.join(__dirname, "public");
+const uploadsDir = path.join(publicDir, "uploads");
+if (!fs.existsSync(publicDir)) {
+  fs.mkdirSync(publicDir);
+}
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
+
 app.use(bodyParser.json());
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(cors());
+app.use("/uploads", express.static(uploadsDir));
 
 mongoose
   .connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/cardsDB")
@@ -45,6 +36,7 @@ app.use("/api/cards", cardRoutes);
 app.use("/api/gallery", galleryRoutes);
 app.use("/api/ibirwa-clients", ibirwaClientsRoutes);
 app.use("/api", contactRoutes);
+app.use("/api/services", serviceRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>
