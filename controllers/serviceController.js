@@ -6,12 +6,18 @@ exports.createService = async (req, res) => {
     const { title, description, detailPage, details } = req.body;
     const imageFile = req.file ? `/uploads/${req.file.filename}` : null;
 
+    const parsedDetails = {
+      ...details,
+      highlights: JSON.parse(details.highlights),
+      tips: JSON.parse(details.tips),
+    };
+
     const newService = new Service({
       title,
       description,
       detailPage,
       imageFile,
-      details,
+      details: parsedDetails,
     });
     await newService.save();
 
@@ -66,9 +72,15 @@ exports.updateServiceById = async (req, res) => {
     const { title, description, detailPage, details } = req.body;
     const imageFile = req.file ? `/uploads/${req.file.filename}` : null;
 
+    const parsedDetails = {
+      ...details,
+      highlights: JSON.parse(details.highlights),
+      tips: JSON.parse(details.tips),
+    };
+
     const updatedService = await Service.findByIdAndUpdate(
       req.params.id,
-      { title, description, detailPage, imageFile, details },
+      { title, description, detailPage, imageFile, details: parsedDetails },
       { new: true }
     );
 
