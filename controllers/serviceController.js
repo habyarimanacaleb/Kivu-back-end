@@ -25,8 +25,11 @@ exports.createService = async (req, res) => {
       .status(201)
       .json({ message: "Service created successfully!", service: newService });
   } catch (error) {
-    console.error("Error creating service:", error); // Log the error details
-    res.status(500).json({ message: "Error creating service", error });
+    console.error("Error creating service:", error.message); // Log the error message
+    console.error("Stack trace:", error.stack); // Log the stack trace
+    res
+      .status(500)
+      .json({ message: "Error creating service", error: error.message });
   }
 };
 
