@@ -51,6 +51,7 @@ exports.getAllServices = async (req, res) => {
       hasPrevPage: currentPage > 1,
     });
   } catch (error) {
+console.error("Error fetching services:", error); // Log the error details
     res.status(500).json({ message: "Error fetching services", error });
   }
 };

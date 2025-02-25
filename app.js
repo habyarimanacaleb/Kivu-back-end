@@ -24,11 +24,7 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 app.use(bodyParser.json());
-app.use(cors());
-const allowedOrigins = [
-  `${process.env.CLIENT_URL}`,
-  `http://localhost:${process.env.PORT}`, // Keep for local testing
-];
+const allowedOrigins = [`${process.env.CLIENT_URL}`, "http://localhost:5173"];
 
 app.use(
   cors({
