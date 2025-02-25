@@ -51,7 +51,7 @@ exports.getAllServices = async (req, res) => {
       hasPrevPage: currentPage > 1,
     });
   } catch (error) {
-console.error("Error fetching services:", error); // Log the error details
+    console.error("Error fetching services:", error); // Log the error details
     res.status(500).json({ message: "Error fetching services", error });
   }
 };
@@ -63,6 +63,7 @@ exports.getServiceById = async (req, res) => {
     if (!service) return res.status(404).json({ message: "Service not found" });
     res.json(service);
   } catch (error) {
+    console.error("Error fetching service:", error); // Log the error details
     res.status(500).json({ message: "Error fetching service", error });
   }
 };
@@ -93,6 +94,7 @@ exports.updateServiceById = async (req, res) => {
       service: updatedService,
     });
   } catch (error) {
+    console.error("Error updating service:", error); // Log the error details
     res.status(500).json({ message: "Error updating service", error });
   }
 };
@@ -106,6 +108,7 @@ exports.deleteServiceById = async (req, res) => {
 
     res.json({ message: "Service deleted successfully!" });
   } catch (error) {
+    console.error("Error deleting service:", error); // Log the error details
     res.status(500).json({ message: "Error deleting service", error });
   }
 };
@@ -130,6 +133,7 @@ exports.getServiceDetails = async (req, res) => {
       message: "Here's the cool service info you requested!",
     });
   } catch (error) {
+    console.error("Error fetching service details:", error); // Log the error details
     res.status(500).json({ message: "Error fetching service details", error });
   }
 };
