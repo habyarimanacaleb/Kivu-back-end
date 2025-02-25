@@ -5,7 +5,6 @@ exports.createService = async (req, res) => {
   try {
     const { title, description, detailPage, details } = req.body;
     const imageFile = req.file ? `/uploads/${req.file.filename}` : null;
-
     const parsedDetails = {
       ...details,
       highlights: JSON.parse(details.highlights),
@@ -54,8 +53,11 @@ exports.getAllServices = async (req, res) => {
       hasPrevPage: currentPage > 1,
     });
   } catch (error) {
-    console.error("Error fetching services:", error); // Log the error details
-    res.status(500).json({ message: "Error fetching services", error });
+    console.error("Error fetching services:", error.message); // Log the error message
+    console.error("Stack trace:", error.stack); // Log the stack trace
+    res
+      .status(500)
+      .json({ message: "Error fetching services", error: error.message });
   }
 };
 
@@ -66,8 +68,11 @@ exports.getServiceById = async (req, res) => {
     if (!service) return res.status(404).json({ message: "Service not found" });
     res.json(service);
   } catch (error) {
-    console.error("Error fetching service:", error); // Log the error details
-    res.status(500).json({ message: "Error fetching service", error });
+    console.error("Error fetching service:", error.message); // Log the error message
+    console.error("Stack trace:", error.stack); // Log the stack trace
+    res
+      .status(500)
+      .json({ message: "Error fetching service", error: error.message });
   }
 };
 
@@ -97,8 +102,11 @@ exports.updateServiceById = async (req, res) => {
       service: updatedService,
     });
   } catch (error) {
-    console.error("Error updating service:", error); // Log the error details
-    res.status(500).json({ message: "Error updating service", error });
+    console.error("Error updating service:", error.message); // Log the error message
+    console.error("Stack trace:", error.stack); // Log the stack trace
+    res
+      .status(500)
+      .json({ message: "Error updating service", error: error.message });
   }
 };
 
@@ -111,8 +119,11 @@ exports.deleteServiceById = async (req, res) => {
 
     res.json({ message: "Service deleted successfully!" });
   } catch (error) {
-    console.error("Error deleting service:", error); // Log the error details
-    res.status(500).json({ message: "Error deleting service", error });
+    console.error("Error deleting service:", error.message); // Log the error message
+    console.error("Stack trace:", error.stack); // Log the stack trace
+    res
+      .status(500)
+      .json({ message: "Error deleting service", error: error.message });
   }
 };
 
@@ -136,7 +147,13 @@ exports.getServiceDetails = async (req, res) => {
       message: "Here's the cool service info you requested!",
     });
   } catch (error) {
-    console.error("Error fetching service details:", error); // Log the error details
-    res.status(500).json({ message: "Error fetching service details", error });
+    console.error("Error fetching service details:", error.message); // Log the error message
+    console.error("Stack trace:", error.stack); // Log the stack trace
+    res
+      .status(500)
+      .json({
+        message: "Error fetching service details",
+        error: error.message,
+      });
   }
 };
