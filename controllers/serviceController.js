@@ -6,13 +6,11 @@ exports.createService = async (req, res) => {
     if (err) {
       return res.status(400).json({ message: err });
     }
-
     try {
       const { title, description, detailPage, details } = req.body;
       if (!title || !description || !detailPage || !details) {
         return res.status(400).json({ message: "Missing required fields" });
       }
-
       let parsedDetails;
       if (typeof details === "string") {
         try {
