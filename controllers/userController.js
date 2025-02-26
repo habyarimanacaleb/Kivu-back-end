@@ -16,6 +16,128 @@ const transporter = nodemailer.createTransport({
     rejectUnauthorized: false,
   },
 });
+
+// Register a new user
+exports.registerUser = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create a new user
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+    });
+
+    await newUser.save();
+
+    res
+      .status(201)
+      .json({ message: "User registered successfully", user: newUser });
+  } catch (error) {
+    console.error("Error registering user:", error.message);
+    res
+      .status(500)
+      .json({ message: "Error registering user", error: error.message });
+  }
+};
+
+// Login a user
+exports.loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Check if user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    // Check if password is correct
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    res.json({ message: "Login successful", token });
+  } catch (error) {
+    console.error("Error logging in user:", error.message);
+    res
+      .status(500)
+      .json({ message: "Error logging in user", error: error.message });
+  }
+};
+
+// Get user profile
+exports.getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json(user);
+  } catch (error) {
+    console.error("Error fetching user profile:", error.message);
+    res
+      .status(500)
+      .json({ message: "Error fetching user profile", error: error.message });
+  }
+};
+
+// Update user profile
+exports.updateUserProfile = async (req, res) => {
+  try {
+    const { name, email } = req.body;
+    const user = await User.findById(req.user.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.name = name || user.name;
+    user.email = email || user.email;
+
+    await user.save();
+
+    res.json({ message: "User profile updated successfully", user });
+  } catch (error) {
+    console.error("Error updating user profile:", error.message);
+    res
+      .status(500)
+      .json({ message: "Error updating user profile", error: error.message });
+  }
+};
+
+// Delete user
+exports.deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting user:", error.message);
+    res
+      .status(500)
+      .json({ message: "Error deleting user", error: error.message });
+  }
+};
+
 exports.signup = async (req, res) => {
   try {
     const { email, username, password, role } = req.body;
@@ -141,50 +263,6 @@ exports.login = async (req, res) => {
       .json({ message: "User logged in successfully", token, user });
   } catch (error) {
     console.error("Error logging in user:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-exports.deleteUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const user = await User.findByIdAndDelete(id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.status(200).json({ message: "User deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting user:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-exports.updateUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { email, username, password, role } = req.body;
-
-    const user = await User.findById(id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Update user fields
-    if (email) user.email = email;
-    if (username) user.username = username;
-    if (role) user.role = role;
-
-    // Hash the password if it's being updated
-    if (password) {
-      const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(password, salt);
-    }
-
-    await user.save();
-
-    res.status(200).json({ message: "User updated successfully", user });
-  } catch (error) {
-    console.error("Error updating user:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

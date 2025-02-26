@@ -20,5 +20,5 @@ router.put(
   serviceController.updateServiceById
 );
 router.delete("/:id", serviceController.deleteServiceById);
-router.get("/:id/details", serviceController.getServiceDetails);
+// router.get("/:id/details", serviceController.getServiceDetails);
 module.exports = router;

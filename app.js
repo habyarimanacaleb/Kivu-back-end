@@ -9,6 +9,7 @@ const galleryRoutes = require("./routes/galleryRoutes");
 const ibirwaClientsRoutes = require("./routes/ibirwaClientsRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const serviceRoutes = require("./routes/ServiceRoutes");
+const userRoutes = require("./routes/userRoutes");
 require("dotenv").config();
 
 const app = express();
@@ -50,6 +51,7 @@ app.use("/api/gallery", galleryRoutes);
 app.use("/api/ibirwa-clients", ibirwaClientsRoutes);
 app.use("/api", contactRoutes);
 app.use("/api/services", serviceRoutes);
+app.use("/api/users", userRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>
