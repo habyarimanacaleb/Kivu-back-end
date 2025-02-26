@@ -22,6 +22,7 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
 }).single("imageFile"); // Match the field name used in frontend
+
 const handleUpload = (req, res) => {
   return new Promise((resolve, reject) => {
     upload(req, res, (err) => {
@@ -33,6 +34,7 @@ const handleUpload = (req, res) => {
     });
   });
 };
+
 exports.createService = async (req, res) => {
   try {
     await handleUpload(req, res);
@@ -131,8 +133,8 @@ exports.updateServiceById = async (req, res) => {
       !Array.isArray(parsedDetails.highlights) ||
       !parsedDetails.tips ||
       !Array.isArray(parsedDetails.tips) ||
-      !parsedDetails.contact.whatsapp ||
-      !parsedDetails.contact.email
+      !parsedDetails.whatsapp ||
+      !parsedDetails.email
     ) {
       return res.status(400).json({ message: "Invalid details format" });
     }
@@ -156,9 +158,12 @@ exports.updateServiceById = async (req, res) => {
     res.status(200).json(updatedService);
   } catch (error) {
     console.error("Error updating service:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };
+
 exports.deleteServiceById = async (req, res) => {
   try {
     const deletedService = await Service.findByIdAndDelete(req.params.id);
