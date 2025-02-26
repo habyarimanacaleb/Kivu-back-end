@@ -42,7 +42,7 @@ exports.createService = async (req, res) => {
         description,
         detailPage,
         details: parsedDetails,
-        imageFile: req.file ? req.file.filename : null, // Save the image filename
+        image: req.file ? req.file.filename : null, // Save the image filename
       });
 
       await newService.save();

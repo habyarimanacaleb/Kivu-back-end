@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
@@ -10,7 +11,6 @@ const ibirwaClientsRoutes = require("./routes/ibirwaClientsRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const serviceRoutes = require("./routes/ServiceRoutes");
 const userRoutes = require("./routes/userRoutes");
-require("dotenv").config();
 
 const app = express();
 
