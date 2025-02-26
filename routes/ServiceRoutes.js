@@ -11,14 +11,18 @@ const storage = multer.diskStorage({
   },
 });
 const upload = multer({ storage });
-router.post("/", upload.single("imageFile"), serviceController.createService);
-router.get("/", serviceController.getAllServices);
-router.get("/:id", serviceController.getServiceById);
+router.post(
+  "/services",
+  upload.single("imageFile"),
+  serviceController.createService
+);
+router.get("/services", serviceController.getAllServices);
+router.get("/services/:id", serviceController.getServiceById);
 router.put(
-  "/:id",
+  "/services/:id",
   upload.single("imageFile"),
   serviceController.updateServiceById
 );
-router.delete("/:id", serviceController.deleteServiceById);
+router.delete("/services/:id", serviceController.deleteServiceById);
 // router.get("/:id/details", serviceController.getServiceDetails);
 module.exports = router;
