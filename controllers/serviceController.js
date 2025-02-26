@@ -1,5 +1,17 @@
 const Service = require("../models/Service");
-const upload = require("../middleware/upload");
+const multer = require("multer");
+const path = require("path");
+
+// Configure Multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+const upload = multer({ storage: storage }).single("imageFile");
 
 exports.createService = async (req, res) => {
   upload(req, res, async (err) => {
@@ -11,6 +23,7 @@ exports.createService = async (req, res) => {
       if (!title || !description || !detailPage || !details) {
         return res.status(400).json({ message: "Missing required fields" });
       }
+
       let parsedDetails;
       if (typeof details === "string") {
         try {
@@ -40,7 +53,7 @@ exports.createService = async (req, res) => {
         description,
         detailPage,
         details: parsedDetails,
-        imageFile: req.file ? req.file.filename : null, // Save the image filename
+        imageFile: req.file ? req.file.path : null,
       });
 
       await newService.save();
@@ -119,7 +132,7 @@ exports.updateServiceById = async (req, res) => {
           description,
           detailPage,
           details: parsedDetails,
-          image: req.file ? req.file.filename : undefined, // Update the image filename if a new file is uploaded
+          imageFile: req.file ? req.file.path : undefined,
         },
         { new: true }
       );
