@@ -105,8 +105,8 @@ exports.getServiceById = async (req, res) => {
 
 exports.updateServiceById = async (req, res) => {
   try {
-    const { title, description, detailPage, details } = req.body;
-    if (!title || !description || !detailPage || !details) {
+    const { title, description, details } = req.body;
+    if (!title || !description || !details) {
       return res.status(400).json({ message: "Missing required fields" });
     }
     let parsedDetails;
