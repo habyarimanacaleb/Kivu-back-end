@@ -105,10 +105,14 @@ exports.getServiceById = async (req, res) => {
 
 exports.updateServiceById = async (req, res) => {
   try {
-    const { title, description, details } = req.body;
-    if (!title || !description || !details) {
+    await handleUpload(req, res);
+
+    const { title, description, detailPage, details } = req.body;
+
+    if (!title || !description || !detailPage || !details) {
       return res.status(400).json({ message: "Missing required fields" });
     }
+
     let parsedDetails;
     if (typeof details === "string") {
       try {
@@ -121,13 +125,14 @@ exports.updateServiceById = async (req, res) => {
     } else {
       parsedDetails = details;
     }
+
     if (
       !parsedDetails.highlights ||
       !Array.isArray(parsedDetails.highlights) ||
       !parsedDetails.tips ||
       !Array.isArray(parsedDetails.tips) ||
-      !parsedDetails.whatsapp ||
-      !parsedDetails.email
+      !parsedDetails.contact.whatsapp ||
+      !parsedDetails.contact.email
     ) {
       return res.status(400).json({ message: "Invalid details format" });
     }
@@ -139,7 +144,7 @@ exports.updateServiceById = async (req, res) => {
         description,
         detailPage,
         details: parsedDetails,
-        imageFile: req.file ? `/uploads/${req.file.filename}` : null,
+        imageFile: req.file ? `/uploads/${req.file.filename}` : undefined,
       },
       { new: true }
     );
@@ -154,7 +159,6 @@ exports.updateServiceById = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 exports.deleteServiceById = async (req, res) => {
   try {
     const deletedService = await Service.findByIdAndDelete(req.params.id);
