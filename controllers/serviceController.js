@@ -2,67 +2,83 @@ const Service = require("../models/Service");
 const multer = require("multer");
 const path = require("path");
 
-// Configure Multer for file uploads
+// Configure Multer storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
+    );
   },
 });
-const upload = multer({ storage: storage }).single("imageFile");
 
-exports.createService = async (req, res) => {
-  upload(req, res, async (err) => {
-    if (err) {
-      return res.status(400).json({ message: err });
-    }
-    try {
-      const { title, description, detailPage, details } = req.body;
-      if (!title || !description || !detailPage || !details) {
-        return res.status(400).json({ message: "Missing required fields" });
-      }
-
-      let parsedDetails;
-      if (typeof details === "string") {
-        try {
-          parsedDetails = JSON.parse(details);
-        } catch (error) {
-          return res
-            .status(400)
-            .json({ message: "Invalid JSON format for details" });
-        }
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+}).single("imageFile"); // Match the field name used in frontend
+const handleUpload = (req, res) => {
+  return new Promise((resolve, reject) => {
+    upload(req, res, (err) => {
+      if (err) {
+        reject(err);
       } else {
-        parsedDetails = details;
+        resolve();
       }
-
-      if (
-        !parsedDetails.highlights ||
-        !Array.isArray(parsedDetails.highlights) ||
-        !parsedDetails.tips ||
-        !Array.isArray(parsedDetails.tips) ||
-        !parsedDetails.whatsapp ||
-        !parsedDetails.email
-      ) {
-        return res.status(400).json({ message: "Invalid details format" });
-      }
-
-      const newService = new Service({
-        title,
-        description,
-        detailPage,
-        details: parsedDetails,
-        imageFile: req.file ? req.file.path : null,
-      });
-
-      await newService.save();
-      res.status(201).json(newService);
-    } catch (error) {
-      console.error("Error creating service:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
+    });
   });
+};
+exports.createService = async (req, res) => {
+  try {
+    await handleUpload(req, res);
+
+    const { title, description, detailPage, details } = req.body;
+    if (!title || !description || !detailPage || !details) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+    let parsedDetails;
+    if (typeof details === "string") {
+      try {
+        parsedDetails = JSON.parse(details);
+      } catch (error) {
+        return res
+          .status(400)
+          .json({ message: "Invalid JSON format for details" });
+      }
+    } else {
+      parsedDetails = details;
+    }
+    if (
+      !parsedDetails.highlights ||
+      !Array.isArray(parsedDetails.highlights) ||
+      !parsedDetails.tips ||
+      !Array.isArray(parsedDetails.tips) ||
+      !parsedDetails.whatsapp ||
+      !parsedDetails.email
+    ) {
+      return res.status(400).json({ message: "Invalid details format" });
+    }
+
+    const newService = new Service({
+      title,
+      description,
+      detailPage,
+      details: parsedDetails,
+      imageFile: req.file ? req.file.filename : null,
+    });
+
+    await newService.save();
+    res.status(201).json(newService);
+  } catch (error) {
+    console.error("Error creating service:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
 exports.getAllServices = async (req, res) => {
@@ -89,64 +105,60 @@ exports.getServiceById = async (req, res) => {
 };
 
 exports.updateServiceById = async (req, res) => {
-  upload(req, res, async (err) => {
-    if (err) {
-      return res.status(400).json({ message: err });
+  try {
+    await handleUpload(req, res);
+
+    const { title, description, detailPage, details } = req.body;
+
+    if (!title || !description || !detailPage || !details) {
+      return res.status(400).json({ message: "Missing required fields" });
     }
 
-    try {
-      const { title, description, detailPage, details } = req.body;
-
-      if (!title || !description || !detailPage || !details) {
-        return res.status(400).json({ message: "Missing required fields" });
+    let parsedDetails;
+    if (typeof details === "string") {
+      try {
+        parsedDetails = JSON.parse(details);
+      } catch (error) {
+        return res
+          .status(400)
+          .json({ message: "Invalid JSON format for details" });
       }
-
-      let parsedDetails;
-      if (typeof details === "string") {
-        try {
-          parsedDetails = JSON.parse(details);
-        } catch (error) {
-          return res
-            .status(400)
-            .json({ message: "Invalid JSON format for details" });
-        }
-      } else {
-        parsedDetails = details;
-      }
-
-      if (
-        !parsedDetails.highlights ||
-        !Array.isArray(parsedDetails.highlights) ||
-        !parsedDetails.tips ||
-        !Array.isArray(parsedDetails.tips) ||
-        !parsedDetails.whatsapp ||
-        !parsedDetails.email
-      ) {
-        return res.status(400).json({ message: "Invalid details format" });
-      }
-
-      const updatedService = await Service.findByIdAndUpdate(
-        req.params.id,
-        {
-          title,
-          description,
-          detailPage,
-          details: parsedDetails,
-          imageFile: req.file ? req.file.path : undefined,
-        },
-        { new: true }
-      );
-
-      if (!updatedService) {
-        return res.status(404).json({ message: "Service not found" });
-      }
-
-      res.status(200).json(updatedService);
-    } catch (error) {
-      console.error("Error updating service:", error);
-      res.status(500).json({ message: "Internal server error" });
+    } else {
+      parsedDetails = details;
     }
-  });
+
+    if (
+      !parsedDetails.highlights ||
+      !Array.isArray(parsedDetails.highlights) ||
+      !parsedDetails.tips ||
+      !Array.isArray(parsedDetails.tips) ||
+      !parsedDetails.whatsapp ||
+      !parsedDetails.email
+    ) {
+      return res.status(400).json({ message: "Invalid details format" });
+    }
+
+    const updatedService = await Service.findByIdAndUpdate(
+      req.params.id,
+      {
+        title,
+        description,
+        detailPage,
+        details: parsedDetails,
+        imageFile: req.file ? req.file.filename : undefined,
+      },
+      { new: true }
+    );
+
+    if (!updatedService) {
+      return res.status(404).json({ message: "Service not found" });
+    }
+
+    res.status(200).json(updatedService);
+  } catch (error) {
+    console.error("Error updating service:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
 exports.deleteServiceById = async (req, res) => {
