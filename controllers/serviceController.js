@@ -5,7 +5,7 @@ const path = require("path");
 // Configure Multer storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/");
+    cb(null, "public/uploads/");
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -69,7 +69,7 @@ exports.createService = async (req, res) => {
       description,
       detailPage,
       details: parsedDetails,
-      imageFile: req.file ? req.file.filename : null,
+      imageFile: req.file ? `/uploads/${req.file.filename}` : null,
     });
 
     await newService.save();
@@ -144,7 +144,7 @@ exports.updateServiceById = async (req, res) => {
         description,
         detailPage,
         details: parsedDetails,
-        imageFile: req.file ? req.file.filename : undefined,
+        imageFile: req.file ? `/uploads/${req.file.filename}` : undefined,
       },
       { new: true }
     );
