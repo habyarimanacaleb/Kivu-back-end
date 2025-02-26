@@ -105,14 +105,10 @@ exports.getServiceById = async (req, res) => {
 
 exports.updateServiceById = async (req, res) => {
   try {
-    await handleUpload(req, res);
-
     const { title, description, detailPage, details } = req.body;
-
     if (!title || !description || !detailPage || !details) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-
     let parsedDetails;
     if (typeof details === "string") {
       try {
@@ -125,7 +121,6 @@ exports.updateServiceById = async (req, res) => {
     } else {
       parsedDetails = details;
     }
-
     if (
       !parsedDetails.highlights ||
       !Array.isArray(parsedDetails.highlights) ||
@@ -144,7 +139,7 @@ exports.updateServiceById = async (req, res) => {
         description,
         detailPage,
         details: parsedDetails,
-        imageFile: req.file ? `/uploads/${req.file.filename}` : undefined,
+        imageFile: req.file ? `/uploads/${req.file.filename}` : null,
       },
       { new: true }
     );
