@@ -66,6 +66,11 @@ exports.createService = async (req, res) => {
       return res.status(400).json({ message: "Invalid details format" });
     }
 
+    const existService = await Service.findOne({ title });
+    if (existService) {
+      return res.status(400).json({ message: "Service already exists" });
+    }
+
     const newService = new Service({
       title,
       description,
