@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
+const session = require("express-session");
 const cardRoutes = require("./routes/cardRoutes");
 const galleryRoutes = require("./routes/galleryRoutes");
 const ibirwaClientsRoutes = require("./routes/ibirwaClientsRoutes");
@@ -29,6 +30,7 @@ app.use(bodyParser.json());
 app.use(
   cors({
     origin: [
+      "*",
       "http://localhost:5173/",
       "https://ibirwa-kivu-bike-tours.netlify.app/",
     ],
@@ -40,6 +42,16 @@ app.use("/uploads", express.static(uploadsDir));
 
 // Serve static files from the public directory
 app.use(express.static("public"));
+
+// Configure session middleware
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }, // Set to true if using HTTPS
+  })
+);
 
 mongoose
   .connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/cardsDB")
