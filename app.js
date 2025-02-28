@@ -28,7 +28,10 @@ app.use(bodyParser.json());
 
 app.use(
   cors({
-    origin: "*",
+    origin: [
+      "http://localhost:5173/",
+      "https://ibirwa-kivu-bike-tours.netlify.app/",
+    ],
     methods: ["POST", "PUT", "GET", "DELETE", "OPTIONS", "HEAD"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
