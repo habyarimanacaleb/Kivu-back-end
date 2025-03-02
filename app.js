@@ -12,10 +12,7 @@ const ibirwaClientsRoutes = require("./routes/ibirwaClientsRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const serviceRoutes = require("./routes/ServiceRoutes");
 const userRoutes = require("./routes/userRoutes");
-
 const app = express();
-
-// Ensure the public/uploads directory exists
 const publicDir = path.join(__dirname, "public");
 const uploadsDir = path.join(publicDir, "uploads");
 if (!fs.existsSync(publicDir)) {
@@ -24,31 +21,27 @@ if (!fs.existsSync(publicDir)) {
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
 }
-
 app.use(bodyParser.json());
-
 app.use(
   cors({
-    origin: ["https://ibirwa-kivu-bike-tours.netlify.app/"],
+    origin: ["https://ibirwa-kivu-bike-tours.netlify.app"],
     methods: ["POST", "PUT", "GET", "DELETE", "OPTIONS", "HEAD"],
     credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 app.use("/uploads", express.static(uploadsDir));
 app.options("*", cors());
-// Serve static files from the public directory
-app.use(express.static("public"));
 
-// Configure session middleware
+app.use(express.static("public"));
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }, // Set to true if using HTTPS
+    cookie: { secure: false },
   })
 );
-
 mongoose
   .connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/cardsDB")
   .then(() => console.log("Connected to MongoDB"))
@@ -59,7 +52,6 @@ app.use("/api/gallery", galleryRoutes);
 app.use("/api/ibirwa-clients", ibirwaClientsRoutes);
 app.use("/api", contactRoutes);
 app.use("/api/services", serviceRoutes);
-// Ensure the base URL for user routes is correctly set
 app.use("/api/users", userRoutes);
 
 const PORT = process.env.PORT || 5000;
