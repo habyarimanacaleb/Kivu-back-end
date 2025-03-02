@@ -49,7 +49,7 @@ exports.signup = async (req, res) => {
     const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
-    const confirmationUrl = `${process.env.BASE_URL}/api/ibirwa-clients/confirm-email/${token}`;
+    const confirmationUrl = `${process.env.BASE_URL}/api/confirm-email/${token}`;
     const mailOptions = {
       from: `"Ibirwa Kivu Bike Tour Services" <${process.env.SMTP_USER}>`,
       to: newUser.email,
