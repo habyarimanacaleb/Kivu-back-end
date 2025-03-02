@@ -33,11 +33,9 @@ exports.signup = async (req, res) => {
         .json({ message: "User already exists with that email or userName" });
     }
 
-    // Hash the password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create and save the new user
     const newUser = new User({
       email,
       username,
@@ -49,7 +47,7 @@ exports.signup = async (req, res) => {
     const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
-    const confirmationUrl = `${process.env.BASE_URL}/api/confirm-email/${token}`;
+    const confirmationUrl = `${process.env.BASE_URL}/api/users/confirm-email/${token}`;
     const mailOptions = {
       from: `"Ibirwa Kivu Bike Tour Services" <${process.env.SMTP_USER}>`,
       to: newUser.email,
@@ -58,7 +56,6 @@ exports.signup = async (req, res) => {
           <p>Thank you for registering to our website.</p>
           <p>Please click <a href='${confirmationUrl}'>Here</a> to confirm your account.</p>`,
     };
-
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.error("Error sending confirmation email:", error);
@@ -101,7 +98,11 @@ exports.confirmEmail = async (req, res) => {
     await user.save();
 
     console.log("Email confirmed successfully");
-    res.redirect(`${process.env.CLIENT_URL}/CLIENT_URL`);
+    if (process.env.NODE_ENV === "production") {
+      return res.redirect(`${process.env.CLIENT_URL}/CLIENT_URL`); // Redirect to the client URL
+    } else {
+      return res.status(200).json({ message: "Email confirmed successfully" });
+    }
   } catch (error) {
     console.error("Error confirming email:", error);
     res.status(500).json({ message: "Server error", error: error.message });
