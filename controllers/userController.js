@@ -91,7 +91,7 @@ exports.confirmEmail = async (req, res) => {
 
     console.log("User email confirmed successfully");
     if (user.isConfirmed) {
-      return res.redirect("/join");
+      return res.redirect("https://ibirwa-kivu-bike-tours.netlify.app/join");
     }
   } catch (error) {
     console.error("Error confirming email:", error);
