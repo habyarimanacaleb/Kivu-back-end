@@ -100,7 +100,8 @@ exports.confirmEmail = async (req, res) => {
     }
     await user.save();
 
-    res.status(200).json({ message: "Email confirmed successfully" });
+    console.log("Email confirmed successfully");
+    res.redirect(`${process.env.CLIENT_URL}/CLIENT_URL`);
   } catch (error) {
     console.error("Error confirming email:", error);
     res.status(500).json({ message: "Server error", error: error.message });
