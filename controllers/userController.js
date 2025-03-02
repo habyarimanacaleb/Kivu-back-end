@@ -90,7 +90,7 @@ exports.confirmEmail = async (req, res) => {
     await user.save();
 
     console.log("User email confirmed successfully");
-    if (isConfirmed) {
+    if (user.isConfirmed) {
       return res.redirect("/join");
     }
   } catch (error) {
