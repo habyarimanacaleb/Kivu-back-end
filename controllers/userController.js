@@ -75,11 +75,9 @@ exports.signup = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
 exports.confirmEmail = async (req, res) => {
   try {
     const { token } = req.params;
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userId = decoded.userId;
 
@@ -89,14 +87,11 @@ exports.confirmEmail = async (req, res) => {
     }
 
     user.isConfirmed = true;
-
-    if (!user.isConfirmed) {
-      return res
-        .status(403)
-        .json({ message: "Please confirm your email before logging in." });
-    }
     await user.save();
-    res.status(200).json({ message: "Email confirmed successfully" });
+
+    console.log("User email confirmed successfully");
+
+    return res.redirect("https://ibirwa-kivu-bike-tours.netlify.app/join"); // Update to match your frontend route
   } catch (error) {
     console.error("Error confirming email:", error);
     res.status(500).json({ message: "Server error", error: error.message });
