@@ -29,17 +29,13 @@ app.use(bodyParser.json());
 
 app.use(
   cors({
-    origin: [
-      "*",
-      "http://localhost:5173/",
-      "https://ibirwa-kivu-bike-tours.netlify.app/",
-    ],
+    origin: ["https://ibirwa-kivu-bike-tours.netlify.app/"],
     methods: ["POST", "PUT", "GET", "DELETE", "OPTIONS", "HEAD"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   })
 );
 app.use("/uploads", express.static(uploadsDir));
-
+app.options("*", cors());
 // Serve static files from the public directory
 app.use(express.static("public"));
 
