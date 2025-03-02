@@ -91,7 +91,7 @@ exports.confirmEmail = async (req, res) => {
 
     console.log("User email confirmed successfully");
 
-    return res.redirect("https://ibirwa-kivu-bike-tours.netlify.app/join"); // Update to match your frontend route
+    return res.redirect("https://ibirwa-kivu-bike-tours.netlify.app/signin"); // Update to match your frontend route
   } catch (error) {
     console.error("Error confirming email:", error);
     res.status(500).json({ message: "Server error", error: error.message });
