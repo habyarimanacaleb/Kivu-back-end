@@ -5,6 +5,7 @@ const verifyUserRole = require("../middleware/verifyUserRole");
 const serviceController = require("../controllers/serviceController");
 
 router.post("/signup", userController.signup);
+router.post("/confirm-email", userController.confirmEmail);
 router.post("/login", userController.login);
 router.post("/logout", userController.logout);
 router.delete("/users/:id", userController.deleteUser);

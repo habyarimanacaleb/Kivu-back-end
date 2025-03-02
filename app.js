@@ -59,7 +59,9 @@ app.use("/api/gallery", galleryRoutes);
 app.use("/api/ibirwa-clients", ibirwaClientsRoutes);
 app.use("/api", contactRoutes);
 app.use("/api/services", serviceRoutes);
-app.use("/api", userRoutes);
+// Ensure the base URL for user routes is correctly set
+app.use("/api/users", userRoutes);
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>
   console.log(`Server running on http://localhost:${PORT}`)
