@@ -24,7 +24,10 @@ if (!fs.existsSync(uploadsDir)) {
 app.use(bodyParser.json());
 app.use(
   cors({
-    origin: ["*", "https://ibirwa-kivu-bike-tours.netlify.app"],
+    origin: [
+      "http://localhost:5173",
+      "https://ibirwa-kivu-bike-tours.netlify.app",
+    ],
     methods: ["POST", "PUT", "GET", "DELETE", "OPTIONS", "HEAD"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
