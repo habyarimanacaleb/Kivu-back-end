@@ -71,7 +71,7 @@ exports.createService = async (req, res) => {
       description,
       detailPage,
       details: parsedDetails,
-      imageFile: req.file ? `/uploads/${req.file.originalname}` : null,
+      imageFile: req.file ? `/uploads/${req.file.originalname}` : null, // Correct path
     });
 
     await newService.save();
@@ -146,7 +146,7 @@ exports.updateServiceById = async (req, res) => {
         description,
         detailPage,
         details: parsedDetails,
-        imageFile: req.file ? `/uploads/${req.file.originalname}` : undefined,
+        imageFile: req.file ? `/uploads/${req.file.originalname}` : undefined, // Correct path
       },
       { new: true }
     );

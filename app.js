@@ -13,6 +13,7 @@ const contactRoutes = require("./routes/contactRoutes");
 const serviceRoutes = require("./routes/ServiceRoutes");
 const userRoutes = require("./routes/userRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
+
 const app = express();
 const publicDir = path.join(__dirname, "public");
 const uploadsDir = path.join(publicDir, "uploads");
@@ -22,6 +23,7 @@ if (!fs.existsSync(publicDir)) {
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
 }
+
 app.use(bodyParser.json());
 app.use(
   cors({
@@ -37,7 +39,10 @@ app.use(
 app.use("/uploads", express.static(uploadsDir));
 app.options("*", cors());
 
+// Serve static files from the public directory
 app.use(express.static("public"));
+
+// Configure session middleware
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -46,6 +51,7 @@ app.use(
     cookie: { secure: false },
   })
 );
+
 mongoose
   .connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/cardsDB")
   .then(() => console.log("Connected to MongoDB"))
