@@ -88,11 +88,8 @@ exports.confirmEmail = async (req, res) => {
 
     user.isConfirmed = true;
     await user.save();
-
+    //  res.status(200).json({ message: "User email confirmed successfully" });
     console.log("User email confirmed successfully");
-    if (user.isConfirmed) {
-      return res.redirect("https://ibirwa-kivu-bike-tours.netlify.app/join");
-    }
   } catch (error) {
     console.error("Error confirming email:", error);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -134,7 +131,6 @@ exports.updateUserProfile = async (req, res) => {
       .json({ message: "Error updating user profile", error: error.message });
   }
 };
-
 exports.deleteUser = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.user.userId);
