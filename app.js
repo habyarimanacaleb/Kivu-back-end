@@ -12,6 +12,7 @@ const ibirwaClientsRoutes = require("./routes/ibirwaClientsRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const serviceRoutes = require("./routes/ServiceRoutes");
 const userRoutes = require("./routes/userRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
 const app = express();
 const publicDir = path.join(__dirname, "public");
 const uploadsDir = path.join(publicDir, "uploads");
@@ -55,6 +56,7 @@ app.use("/api/gallery", galleryRoutes);
 app.use("/api/ibirwa-clients", ibirwaClientsRoutes);
 app.use("/api", contactRoutes);
 app.use("/api/services", serviceRoutes);
+app.use("/api/upload", uploadRoutes);
 
 // Ensure the base URL for user routes is correctly set
 app.use("/api/users", userRoutes);

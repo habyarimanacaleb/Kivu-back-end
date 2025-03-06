@@ -15,13 +15,12 @@ const storage = multer.diskStorage({
     );
   },
 });
-
 const upload = multer({
   storage: storage,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
-}).single("imageFile"); // Match the field name used in frontend
+}).single("imageFile");
 
 const handleUpload = (req, res) => {
   return new Promise((resolve, reject) => {
