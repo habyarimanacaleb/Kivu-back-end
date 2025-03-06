@@ -8,11 +8,7 @@ const storage = multer.diskStorage({
     cb(null, "public/uploads/");
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(
-      null,
-      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
-    );
+    cb(null, file.originalname);
   },
 });
 const upload = multer({
@@ -75,7 +71,7 @@ exports.createService = async (req, res) => {
       description,
       detailPage,
       details: parsedDetails,
-      imageFile: req.file ? `/uploads/${req.file.filename}` : null,
+      imageFile: req.file ? `/uploads/${req.file.originalname}` : null,
     });
 
     await newService.save();
@@ -150,7 +146,7 @@ exports.updateServiceById = async (req, res) => {
         description,
         detailPage,
         details: parsedDetails,
-        imageFile: req.file ? `/uploads/${req.file.filename}` : undefined,
+        imageFile: req.file ? `/uploads/${req.file.originalname}` : undefined,
       },
       { new: true }
     );
