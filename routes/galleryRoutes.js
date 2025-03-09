@@ -1,9 +1,21 @@
-const express = require('express');
-const router = express.Router();
-const uploadPhotoImages = require('../middleware/uploadgalleryImages');
-const galleryController = require('../controllers/galleryController');
+const express = require("express");
+const galleryController = require("../controllers/galleryController");
+const upload = require("../middleware/upload");
 
-router.post('/', uploadPhotoImages.single('imageFile'), galleryController.createGalleryCard);
-router.get('/', galleryController.getAllPhotos);
+const router = express.Router();
+
+router.post(
+  "/",
+  upload.single("imageFile"),
+  galleryController.createGalleryCard
+);
+router.get("/", galleryController.getAllPhotos);
+router.get("/:id", galleryController.getPhotoById);
+router.put(
+  "/:id",
+  upload.single("imageFile"),
+  galleryController.updateGalleryCard
+);
+router.delete("/:id", galleryController.deleteGalleryCard);
 
 module.exports = router;

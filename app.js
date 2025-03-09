@@ -6,13 +6,11 @@ const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
 const session = require("express-session");
-const cardRoutes = require("./routes/cardRoutes");
 const galleryRoutes = require("./routes/galleryRoutes");
 const ibirwaClientsRoutes = require("./routes/ibirwaClientsRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const serviceRoutes = require("./routes/ServiceRoutes");
 const userRoutes = require("./routes/userRoutes");
-const uploadRoutes = require("./routes/uploadRoutes");
 
 const app = express();
 const publicDir = path.join(__dirname, "public");
@@ -41,8 +39,6 @@ app.options("*", cors());
 
 // Serve static files from the public directory
 app.use(express.static("public"));
-
-// Configure session middleware
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -57,12 +53,10 @@ mongoose
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-app.use("/api/cards", cardRoutes);
 app.use("/api/gallery", galleryRoutes);
 app.use("/api/ibirwa-clients", ibirwaClientsRoutes);
 app.use("/api", contactRoutes);
 app.use("/api/services", serviceRoutes);
-app.use("/api/upload", uploadRoutes);
 
 // Ensure the base URL for user routes is correctly set
 app.use("/api/users", userRoutes);

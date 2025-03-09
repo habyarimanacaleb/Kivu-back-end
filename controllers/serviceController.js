@@ -1,26 +1,9 @@
 const Service = require("../models/Service");
-const multer = require("multer");
-const path = require("path");
-
-// Configure Multer storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "public/uploads/");
-  },
-  filename: (req, file, cb) => {
-    cb(null, file.originalname);
-  },
-});
-const upload = multer({
-  storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-  },
-}).single("imageFile");
+const upload = require("../middleware/upload");
 
 const handleUpload = (req, res) => {
   return new Promise((resolve, reject) => {
-    upload(req, res, (err) => {
+    upload.single("imageFile")(req, res, (err) => {
       if (err) {
         reject(err);
       } else {
@@ -71,7 +54,7 @@ exports.createService = async (req, res) => {
       description,
       detailPage,
       details: parsedDetails,
-      imageFile: req.file ? `/uploads/${req.file.originalname}` : null, // Correct path
+      imageFile: req.file ? req.file.path : null, // Cloudinary URL
     });
 
     await newService.save();
@@ -146,7 +129,7 @@ exports.updateServiceById = async (req, res) => {
         description,
         detailPage,
         details: parsedDetails,
-        imageFile: req.file ? `/uploads/${req.file.originalname}` : undefined, // Correct path
+        imageFile: req.file ? req.file.path : undefined, // Cloudinary URL
       },
       { new: true }
     );
