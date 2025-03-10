@@ -129,7 +129,7 @@ exports.updateServiceById = async (req, res) => {
         description,
         detailPage,
         details: parsedDetails,
-        imageFile: req.file ? req.file.path : undefined, // Cloudinary URL
+        imageFile: req.file ? req.file.path : undefined,
       },
       { new: true }
     );
@@ -146,7 +146,6 @@ exports.updateServiceById = async (req, res) => {
       .json({ message: "Internal server error", error: error.message });
   }
 };
-
 exports.deleteServiceById = async (req, res) => {
   try {
     const deletedService = await Service.findByIdAndDelete(req.params.id);
