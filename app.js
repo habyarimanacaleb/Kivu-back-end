@@ -14,6 +14,7 @@ const ibirwaClientsRoutes = require("./routes/ibirwaClientsRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const serviceRoutes = require("./routes/ServiceRoutes");
 const userRoutes = require("./routes/userRoutes");
+const tourInquiryRoutes = require("./routes/tourInquiry.routes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -86,6 +87,7 @@ app.use("/api/ibirwa-clients", ibirwaClientsRoutes);
 app.use("/api", contactRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/inquiries", tourInquiryRoutes);
 
 // ** Start Server **
 app.listen(PORT, () => {
