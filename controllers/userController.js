@@ -190,6 +190,17 @@ exports.login = async (req, res) => {
         token: token,
       };
     }
+    res.cookie(
+      "userPreferences",
+      JSON.stringify({ theme: "dark", language: "en" }),
+      {
+        httpOnly: true, // Prevents client-side JavaScript from accessing the cookie
+        secure: process.env.NODE_ENV === "production", // Ensures cookie is only sent over HTTPS in production
+        maxAge: 24 * 60 * 60 * 1000, // Cookie will expire in 1 day
+        sameSite: "lax", // Helps protect against CSRF attacks
+      }
+    );
+
     res
       .status(200)
       .json({ message: "User logged in successfully", token, user });
