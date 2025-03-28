@@ -20,22 +20,27 @@ const transporter = nodemailer.createTransport({
 exports.signup = async (req, res) => {
   try {
     const { email, username, password, role } = req.body;
+
+    // Validate required fields
     if (!email || !username || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email, userName and password are required." });
+      return res.status(400).render("confirmationFailure", {
+        message: "Email, Username, and Password are required.",
+      });
     }
 
+    // Check if the user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res
-        .status(400)
-        .json({ message: "User already exists with that email or userName" });
+      return res.status(400).render("confirmationFailure", {
+        message: "User already exists with that email or Username.",
+      });
     }
 
+    // Hash the password before saving
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Create a new user
     const newUser = new User({
       email,
       username,
@@ -44,10 +49,16 @@ exports.signup = async (req, res) => {
       isConfirmed: false,
     });
     await newUser.save();
+
+    // Generate a confirmation token
     const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
+
+    // Confirmation URL
     const confirmationUrl = `${process.env.BASE_URL}/api/users/confirm-email/${token}`;
+
+    // Setup email options
     const mailOptions = {
       from: `"Ibirwa Kivu Bike Tour Services" <${process.env.SMTP_USER}>`,
       to: newUser.email,
@@ -56,25 +67,32 @@ exports.signup = async (req, res) => {
           <p>Thank you for registering to our website.</p>
           <p>Please click <a href='${confirmationUrl}'>Here</a> to confirm your account.</p>`,
     };
+
+    // Send confirmation email
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.error("Error sending confirmation email:", error);
-        return res
-          .status(500)
-          .json({ message: "Error sending confirmation email" });
+        return res.status(500).render("confirmationFailure", {
+          message: "Error sending confirmation email. Please try again later.",
+        });
       }
+
       console.log("Confirmation email sent:", info.response);
-      res.status(201).json({
+
+      // Render success page
+      res.status(201).render("confirmationSuccess", {
         message:
           "User signed up successfully. Please check your email to confirm your account.",
-        user: newUser,
       });
     });
   } catch (error) {
     console.error("Signup error:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).render("confirmationFailure", {
+      message: "Server error occurred. Please try again later.",
+    });
   }
 };
+
 exports.confirmEmail = async (req, res) => {
   try {
     const { token } = req.params;
