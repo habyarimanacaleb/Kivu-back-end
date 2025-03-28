@@ -83,18 +83,19 @@ exports.confirmEmail = async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(400).json({ message: "Invalid token" });
+      return res.status(400).render("confirmationFailure");
     }
 
     user.isConfirmed = true;
     await user.save();
-    //  res.status(200).json({ message: "User email confirmed successfully" });
-    console.log("User email confirmed successfully");
+
+    res.status(200).render("confirmationSuccess");
   } catch (error) {
     console.error("Error confirming email:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).render("confirmationFailure");
   }
 };
+
 exports.getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select("-password");
@@ -231,8 +232,6 @@ exports.logout = (req, res) => {
       });
     }
 
-    // If you're using JWT, you can clear the token on the client side
-    // You can also implement a token blacklist if needed
     res.status(200).json({ message: "User logged out successfully" });
   } catch (error) {
     console.error("Error logging out:", error);
@@ -251,6 +250,44 @@ exports.getSessionData = (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+exports.getMonthlySignups = async (req, res) => {
+  try {
+    const signups = await User.aggregate([
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    const months = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+
+    const formattedData = signups.map((s) => ({
+      month: months[s._id - 1],
+      count: s.count,
+    }));
+    res.status(200).json(formattedData);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 exports.restricted = (req, res) => {
   res.status(200).json({ message: "Access granted to restricted endpoint" });
 };

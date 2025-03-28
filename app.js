@@ -7,7 +7,6 @@ const path = require("path");
 const fs = require("fs");
 const session = require("express-session");
 const compression = require("compression");
-
 // Import routes
 const galleryRoutes = require("./routes/galleryRoutes");
 const ibirwaClientsRoutes = require("./routes/ibirwaClientsRoutes");
@@ -15,21 +14,22 @@ const contactRoutes = require("./routes/contactRoutes");
 const serviceRoutes = require("./routes/ServiceRoutes");
 const userRoutes = require("./routes/userRoutes");
 const tourInquiryRoutes = require("./routes/tourInquiry.routes");
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 const NODE_ENV = process.env.NODE_ENV || "development";
-
 // ** Ensure directories exist **
 const publicDir = path.join(__dirname, "public");
 const uploadsDir = path.join(publicDir, "uploads");
 
 if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir);
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
-
+// Set the view engine to EJS
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 // ** Middleware **
 app.use(compression()); // Improve performance
 app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(
   cors({
     origin: [
@@ -55,10 +55,8 @@ app.use((req, res, next) => {
 });
 app.use("/uploads", express.static(uploadsDir));
 app.options("*", cors());
-
 // Serve static files
 app.use(express.static("public"));
-
 // ** Session Configuration **
 app.use(
   session({

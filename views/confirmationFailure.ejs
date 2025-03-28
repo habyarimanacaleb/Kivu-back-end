@@ -1,0 +1,13 @@
+<%- include('partials/header', { title: 'Email Confirmation Failed' }) %> <%-
+include('partials/loading') %>
+
+<div class="message-container">
+  <h1>❌ Email Confirmation Failed!</h1>
+  <p>
+    We couldn't verify your email. Please try again or contact support for
+    assistance.
+  </p>
+  <button onclick="redirectToSupport()">Contact Support</button>
+</div>
+
+<%- include('partials/footer') %>

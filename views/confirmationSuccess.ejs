@@ -1,0 +1,13 @@
+<%- include('partials/header', { title: 'Email Confirmation Success' }) %> <%-
+include('partials/loading') %>
+
+<div class="message-container">
+  <h1>✅ Email Successfully Confirmed!</h1>
+  <p>
+    Your email has been successfully verified. You can now proceed to access
+    your account.
+  </p>
+  <button onclick="redirectToApp()">Proceed to Login</button>
+</div>
+
+<%- include('partials/footer') %>
