@@ -87,24 +87,29 @@ app.use("/api/services", serviceRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/inquiries", tourInquiryRoutes);
 
+// ** Global Error Handler **
+app.use((err, req, res, next) => {
+  console.error("An error occurred:", err.message);
+  res.status(err.status || 500).json({
+    message: err.message || "Internal Server Error",
+    error: NODE_ENV === "development" ? err : {}, // Include stack trace in development
+  });
+});
+
+// ** 404 Handler **
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
+});
+
 // ** Start Server **
 app.listen(PORT, () => {
   console.log(
     "-------------------------------------------------------------------------------"
   );
   console.log(
-    "-------------------------------------------------------------------------------"
-  );
-  console.log(
-    "-------------------------------            -----------------------------"
-  );
-  console.log(
     `🚀 Server running in ${NODE_ENV} mode on http://localhost:${PORT}`
   );
   console.log(
     "-------------------------------------------------------------------------------"
-  );
-  console.log(
-    "-------------------                    -----------------------------------------------"
   );
 });

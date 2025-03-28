@@ -17,22 +17,22 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-exports.signup = async (req, res) => {
+exports.signup = async (req, res) => { 
   try {
     const { email, username, password, role } = req.body;
 
     // Validate required fields
-    if (!email || !username || !password) {
-      return res.status(400).render("confirmationFailure", {
-        message: "Email, Username, and Password are required.",
+    if (!email || !username || !password || !role) {
+      return res.status(400).json({ 
+        message: "Email, Username, Password, and Role are required." 
       });
     }
 
     // Check if the user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).render("confirmationFailure", {
-        message: "User already exists with that email or Username.",
+      return res.status(400).json({ 
+        message: "User already exists with that email or Username." 
       });
     }
 
@@ -63,36 +63,34 @@ exports.signup = async (req, res) => {
       from: `"Ibirwa Kivu Bike Tour Services" <${process.env.SMTP_USER}>`,
       to: newUser.email,
       subject: "Email Confirmation",
-      html: `<p>Dear ${username},</p>
-          <p>Thank you for registering to our website.</p>
-          <p>Please click <a href='${confirmationUrl}'>Here</a> to confirm your account.</p>`,
+      html: `
+        <p>Dear ${username},</p>
+        <p>Thank you for registering to our website.</p>
+        <p>Please click <a href='${confirmationUrl}'>Here</a> to confirm your account.</p>
+      `,
     };
 
     // Send confirmation email
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.error("Error sending confirmation email:", error);
-        return res.status(500).render("confirmationFailure", {
-          message: "Error sending confirmation email. Please try again later.",
-        });
+        return res.status(500).json({ message: "Error sending confirmation email. Please try again later." });
       }
-
+      if (info.rejected.length > 0) {
+        console.error("Email rejected:", info.rejected);
+        return res.status(500).json({ message: "Email rejected. Please check the email address." });
+      }
       console.log("Confirmation email sent:", info.response);
 
-      // Render success page
-      res.status(201).render("confirmationSuccess", {
-        message:
-          "User signed up successfully. Please check your email to confirm your account.",
-      });
+      // Return success message and user data
+      res.status(201).json({ message: "Signup successful! Please check your email to confirm your account.", user: newUser });
+      console.log("Email confirmation sent to:", newUser.email);
     });
   } catch (error) {
     console.error("Signup error:", error);
-    res.status(500).render("confirmationFailure", {
-      message: "Server error occurred. Please try again later.",
-    });
+    res.status(500).json({ message: "Server error occurred. Please try again later." });
   }
 };
-
 exports.confirmEmail = async (req, res) => {
   try {
     const { token } = req.params;
@@ -256,17 +254,21 @@ exports.logout = (req, res) => {
     if (req.session) {
       req.session.destroy((err) => {
         if (err) {
-          return res.status(500).json({ message: "Error logging out" });
+          console.error("Error destroying session:", err);
+          return res.status(500).json({ message: "Failed to log out. Please try again." });
         }
+        res.clearCookie("connect.sid"); // Clear the session cookie
+        res.status(200).json({ message: "Logged out successfully." });
       });
+    } else {
+      res.status(200).json({ message: "No active session found." });
     }
-
-    res.status(200).json({ message: "User logged out successfully" });
   } catch (error) {
-    console.error("Error logging out:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error during logout:", error);
+    res.status(500).json({ message: "Server error occurred during logout." });
   }
 };
+
 exports.getSessionData = (req, res) => {
   try {
     if (!req.session.user) {
