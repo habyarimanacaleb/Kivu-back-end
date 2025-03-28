@@ -22,9 +22,9 @@ exports.signup = async (req, res) => {
     const { email, username, password, role } = req.body;
 
     // Validate required fields
-    if (!email || !username || !password || !role) {
+    if (!email || !username || !password) {
       return res.status(400).json({ 
-        message: "Email, Username, Password, and Role are required." 
+        message: "Email, Username and Password are required." 
       });
     }
 

@@ -1,13 +1,132 @@
-<%- include('partials/header', { title: 'Email Confirmation Failed' }) %> <%-
-include('partials/loading') %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Confirmation Failed</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #ff7e5f, #feb47b);
+      color: #fff;
+      overflow: hidden;
+    }
+    .message-container {
+      text-align: center;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+      animation: fadeIn 1s ease-in-out;
+      max-width: 400px;
+      width: 90%;
+    }
+    h1 {
+      color: #dc3545;
+      font-size: 28px;
+      margin-bottom: 15px;
+    }
+    p {
+      color: #333;
+      font-size: 16px;
+      margin: 10px 0 20px;
+    }
+    button {
+      padding: 12px 25px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      animation: fadeOut 1s ease-in-out forwards;
+    }
+    .loading-spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #007bff;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+    @keyframes fadeOut {
+      from {
+        opacity: 1;
+      }
+      to {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Animation -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+  </div>
 
-<div class="message-container">
-  <h1>❌ Email Confirmation Failed!</h1>
-  <p>
-    We couldn't verify your email. Please try again or contact support for
-    assistance.
-  </p>
-  <button onclick="redirectToSupport()">Contact Support</button>
-</div>
+  <!-- Message Container -->
+  <div class="message-container">
+    <h1>❌ Email Confirmation Failed!</h1>
+    <p>
+      We couldn't verify your email. Please try again or contact support for assistance.
+    </p>
+    <button onclick="redirectToSupport()">Contact Support</button>
+  </div>
 
-<%- include('partials/footer') %>
+  <script>
+    // Redirect function
+    function redirectToSupport() {
+      // Replace '/' with the actual route to your support page
+      window.location.href = '/';
+    }
+
+    // Simulate loading animation
+    window.onload = function () {
+      const loadingOverlay = document.getElementById('loadingOverlay');
+      setTimeout(() => {
+        loadingOverlay.style.display = 'none';
+      }, 1500); // Adjust the timeout as needed
+    };
+  </script>
+</body>
+</html>
