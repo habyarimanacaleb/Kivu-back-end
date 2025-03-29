@@ -6,41 +6,46 @@
   <title>Email Confirmation Success</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Arial', sans-serif;
       margin: 0;
       padding: 0;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      background-color: #f8f9fa;
+      background: linear-gradient(135deg, #6dd5ed, #2193b0);
+      color: #fff;
       overflow: hidden;
     }
     .message-container {
       text-align: center;
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.9);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
       animation: fadeIn 1s ease-in-out;
+      max-width: 400px;
+      width: 90%;
     }
     h1 {
       color: #28a745;
-      font-size: 24px;
+      font-size: 28px;
+      margin-bottom: 15px;
     }
     p {
-      color: #6c757d;
-      margin: 10px 0;
+      color: #333;
+      font-size: 16px;
+      margin: 10px 0 20px;
     }
     button {
-      padding: 10px 20px;
+      padding: 12px 25px;
       background-color: #007bff;
       color: #fff;
       border: none;
       border-radius: 5px;
       cursor: pointer;
       font-size: 16px;
-      animation: fadeIn 2s ease-in-out;
+      transition: background-color 0.3s ease;
     }
     button:hover {
       background-color: #0056b3;
@@ -94,12 +99,10 @@
   </style>
 </head>
 <body>
-  <!-- Loading Animation -->
+
   <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-spinner"></div>
   </div>
-
-  <!-- Message Container -->
   <div class="message-container">
     <h1>✅ Email Successfully Confirmed!</h1>
     <p>
@@ -109,18 +112,17 @@
   </div>
 
   <script>
-    // Redirect function
+
     function redirectToApp() {
-      // Replace '/join' with the actual route to your login page
-      window.location.href = '/join';
+
+      window.location.href = 'https://ibirwa-kivu-bike-tours.netlify.app/login';
     }
 
-    // Simulate loading animation
     window.onload = function () {
       const loadingOverlay = document.getElementById('loadingOverlay');
       setTimeout(() => {
         loadingOverlay.style.display = 'none';
-      }, 1500); // Adjust the timeout as needed
+      }, 1500);
     };
   </script>
 </body>

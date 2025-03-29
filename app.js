@@ -87,6 +87,7 @@ app.use("/api/services", serviceRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/inquiries", tourInquiryRoutes);
 
+
 // ** Global Error Handler **
 app.use((err, req, res, next) => {
   console.error("An error occurred:", err.message);

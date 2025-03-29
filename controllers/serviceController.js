@@ -16,7 +16,6 @@ const handleUpload = (req, res) => {
 exports.createService = async (req, res) => {
   try {
     await handleUpload(req, res);
-
     const { title, description, detailPage, details } = req.body;
     if (!title || !description || !detailPage || !details) {
       return res.status(400).json({ message: "Missing required fields" });
