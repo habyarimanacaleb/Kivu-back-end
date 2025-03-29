@@ -99,7 +99,6 @@
   </style>
 </head>
 <body>
-
   <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-spinner"></div>
   </div>
@@ -110,14 +109,10 @@
     </p>
     <button onclick="redirectToApp()">Proceed to Login</button>
   </div>
-
   <script>
-
     function redirectToApp() {
-
-      window.location.href = 'https://ibirwa-kivu-bike-tours.netlify.app/login';
+      window.location.href = 'https://ibirwa-kivu-bike-tours.netlify.app/signin';
     }
-
     window.onload = function () {
       const loadingOverlay = document.getElementById('loadingOverlay');
       setTimeout(() => {
