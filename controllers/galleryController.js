@@ -44,12 +44,34 @@ exports.createGalleryCard = async (req, res) => {
 };
 
 /**
- * Get All Gallery Photos
+ * Get All Gallery Photos with Filters & Pagination
  */
 exports.getAllPhotos = async (req, res) => {
   try {
-    const galleryCards = await Photo.find();
-    res.status(200).json(galleryCards);
+    const { page = 1, limit = 10, title, showAll } = req.query;
+
+    const query = {};
+
+    // Optional filter by title (case-insensitive)
+    if (title) {
+      query.title = { $regex: title, $options: "i" };
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const photos = showAll === "true"
+      ? await Photo.find(query).sort({ createdAt: -1 })
+      : await Photo.find(query).skip(skip).limit(parseInt(limit)).sort({ createdAt: -1 });
+
+    const total = await Photo.countDocuments(query);
+
+    res.status(200).json({
+      page: showAll === "true" ? 1 : parseInt(page),
+      limit: showAll === "true" ? total : parseInt(limit),
+      total,
+      totalPages: showAll === "true" ? 1 : Math.ceil(total / limit),
+      results: photos,
+    });
   } catch (error) {
     console.error("Error fetching photos:", error);
     res.status(500).json({ message: "Server error" });
@@ -95,11 +117,9 @@ exports.updateGalleryCard = async (req, res) => {
 
     // Handle new image upload
     if (req.file) {
-      // Delete old image from Cloudinary
       const oldImagePublicId = photo.imageFile.split("/").pop().split(".")[0];
       await upload.uploader.destroy(oldImagePublicId);
 
-      // Assign new image URL
       photo.imageFile = req.file.path;
     }
 
@@ -122,7 +142,7 @@ exports.deleteGalleryCard = async (req, res) => {
     if (!photo) {
       return res.status(404).json({ message: "Photo not found" });
     }
-    // Remove from database
+
     await Photo.findByIdAndDelete(id);
     res.status(200).json({ message: "Gallery Card Deleted Successfully" });
   } catch (error) {

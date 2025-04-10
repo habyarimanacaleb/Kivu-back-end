@@ -4,18 +4,13 @@ const { sendEmail } = require('../controllers/emailController');
 exports.createService = async (req, res) => {
   try {
     const { title, description, detailPage, details } = req.body;
-    
-    // Early validation with proper error messages
-    if (!title || !description || !detailPage || !details) {
+        if (!title || !description || !detailPage || !details) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-
-    // Optimized details parsing
     const parsedDetails = typeof details === "string" 
       ? JSON.parse(details) 
       : details;
 
-    // Validation with single if statement
     if (!Array.isArray(parsedDetails?.highlights) || 
         !Array.isArray(parsedDetails?.tips) ||
         !parsedDetails?.whatsapp || 
@@ -23,13 +18,11 @@ exports.createService = async (req, res) => {
       return res.status(400).json({ message: "Invalid details format" });
     }
 
-    // Optimized existence check with select only needed field
     const exists = await Service.exists({ title }).lean();
     if (exists) {
       return res.status(400).json({ message: "Service already exists" });
     }
 
-    // Create and save in one operation
     const newService = await Service.create({
       title,
       description,
@@ -37,8 +30,6 @@ exports.createService = async (req, res) => {
       details: parsedDetails,
       imageFile: req.file?.path || null,
     });
-
-    // Non-blocking email notification
     sendEmail(
       process.env.ADMIN_EMAIL || 'admin@example.com',
       `New Service Created: ${newService.title}`,
@@ -53,7 +44,6 @@ exports.createService = async (req, res) => {
         </ul>
       `
     ).catch(err => console.error("Email failed:", err));
-
     return res.status(201).json(newService);
   } catch (error) {
     console.error("Error creating service:", error);
@@ -64,10 +54,8 @@ exports.createService = async (req, res) => {
     });
   }
 };
-
 exports.getAllServices = async (req, res) => {
   try {
-    // Lean query for better performance with only needed fields
     const services = await Service.find()
       .select('title description detailPage imageFile')
       .lean()
@@ -104,25 +92,18 @@ exports.updateServiceById = async (req, res) => {
 
     const { title, description, detailPage, details } = req.body;
 
-    // Early validation
     if (!title || !description || !detailPage || !details) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-
-    // Efficient details parsing
     const parsedDetails = typeof details === "string" 
       ? JSON.parse(details) 
       : details;
-
-    // Combined validation
     if (!Array.isArray(parsedDetails?.highlights) || 
         !Array.isArray(parsedDetails?.tips) ||
         !parsedDetails?.whatsapp || 
         !parsedDetails?.email) {
       return res.status(400).json({ message: "Invalid details format" });
     }
-
-    // Optimized findAndUpdate with projection
     const updatedService = await Service.findByIdAndUpdate(
       req.params.id,
       {
