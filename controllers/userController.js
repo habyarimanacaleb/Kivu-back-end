@@ -3,24 +3,27 @@ require("dotenv").config();
 const User = require("../models/userModel");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-exports.signup = async (req, res) => { 
+const { sendEmail } = require("../controllers/emailController");
+
+exports.signup = async (req, res) => {
   try {
     const { email, username, password, role } = req.body;
 
     // Validate required fields
     if (!email || !username || !password) {
-      return res.status(400).json({ 
-        message: "Email, Username and Password are required." 
+      return res.status(400).json({
+        message: "Email, Username, and Password are required.",
       });
     }
 
-    // Check if the user already exists
-    const existingUser = await User.findOne({ email });
+    // Check if the user already exists using query
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
-      return res.status(400).json({ 
-        message: "User already exists with that email or Username." 
+      return res.status(400).json({
+        message: "User already exists with that email or Username.",
       });
     }
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -31,13 +34,15 @@ exports.signup = async (req, res) => {
       password: hashedPassword,
       role,
       isConfirmed: false,
+      confirmationExpires: Date.now() + 1000 * 60 * 60 * 24, // expired in 1 day
     });
+
     await newUser.save();
-    
+
     const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
-    
+
     const confirmationUrl = `${process.env.BASE_URL}/api/ibirwa-clients/confirm-email/${token}`;
     await sendEmail(
       newUser.email,
@@ -50,9 +55,9 @@ exports.signup = async (req, res) => {
       `
     );
 
-    res.status(201).json({ 
-      message: "Signup successful! Please check your email to confirm your account.", 
-      user: newUser 
+    res.status(201).json({
+      message: "Signup successful! Please check your email to confirm your account.",
+      user: newUser,
     });
     console.log("Email confirmation sent to:", newUser.email);
 
@@ -91,10 +96,12 @@ exports.login = async (req, res) => {
         .status(400)
         .json({ message: "Email and password are required." });
     }
-    const user = await User.findOne({ email });
+
+    const user = await User.findOne({ email }).select("+password");
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
+
     if (!user.isConfirmed) {
       return res
         .status(403)
@@ -105,6 +112,7 @@ exports.login = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ message: "Incorrect Password" });
     }
+
     const token = jwt.sign(
       {
         userId: user._id,
@@ -114,6 +122,7 @@ exports.login = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
+
     if (req.session) {
       req.session.user = {
         userId: user._id,
@@ -122,13 +131,14 @@ exports.login = async (req, res) => {
         token: token,
       };
     }
+
     res.cookie(
       "userPreferences",
       JSON.stringify({ theme: "dark", language: "en" }),
       {
-        httpOnly: true, 
-        secure: process.env.NODE_ENV === "production", 
-        maxAge: 24 * 60 * 60 * 1000, 
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 24 * 60 * 60 * 1000,
         sameSite: "lax",
       }
     );
@@ -156,6 +166,7 @@ exports.getUserProfile = async (req, res) => {
       .json({ message: "Error fetching user profile", error: error.message });
   }
 };
+
 exports.updateUserProfile = async (req, res) => {
   try {
     const { username, email } = req.body;
@@ -178,6 +189,7 @@ exports.updateUserProfile = async (req, res) => {
       .json({ message: "Error updating user profile", error: error.message });
   }
 };
+
 exports.deleteUser = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.user.userId);
@@ -202,6 +214,7 @@ exports.getAllUsers = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 exports.getUserById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -217,6 +230,7 @@ exports.getUserById = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 exports.logout = (req, res) => {
   try {
     if (req.session) {
@@ -225,7 +239,7 @@ exports.logout = (req, res) => {
           console.error("Error destroying session:", err);
           return res.status(500).json({ message: "Failed to log out. Please try again." });
         }
-        res.clearCookie("connect.sid"); 
+        res.clearCookie("connect.sid");
         res.status(200).json({ message: "Logged out successfully." });
       });
     } else {
