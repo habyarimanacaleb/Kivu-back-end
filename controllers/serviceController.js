@@ -1,89 +1,100 @@
 const Service = require("../models/Service");
-const upload = require("../middleware/upload");
-
-const handleUpload = (req, res) => {
-  return new Promise((resolve, reject) => {
-    upload.single("imageFile")(req, res, (err) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
-    });
-  });
-};
+const { sendEmail } = require('../controllers/emailController');
 
 exports.createService = async (req, res) => {
   try {
-    await handleUpload(req, res);
     const { title, description, detailPage, details } = req.body;
+    
+    // Early validation with proper error messages
     if (!title || !description || !detailPage || !details) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-    let parsedDetails;
-    if (typeof details === "string") {
-      try {
-        parsedDetails = JSON.parse(details);
-      } catch (error) {
-        return res
-          .status(400)
-          .json({ message: "Invalid JSON format for details" });
-      }
-    } else {
-      parsedDetails = details;
-    }
-    if (
-      !parsedDetails.highlights ||
-      !Array.isArray(parsedDetails.highlights) ||
-      !parsedDetails.tips ||
-      !Array.isArray(parsedDetails.tips) ||
-      !parsedDetails.whatsapp ||
-      !parsedDetails.email
-    ) {
+
+    // Optimized details parsing
+    const parsedDetails = typeof details === "string" 
+      ? JSON.parse(details) 
+      : details;
+
+    // Validation with single if statement
+    if (!Array.isArray(parsedDetails?.highlights) || 
+        !Array.isArray(parsedDetails?.tips) ||
+        !parsedDetails?.whatsapp || 
+        !parsedDetails?.email) {
       return res.status(400).json({ message: "Invalid details format" });
     }
 
-    const existService = await Service.findOne({ title });
-    if (existService) {
+    // Optimized existence check with select only needed field
+    const exists = await Service.exists({ title }).lean();
+    if (exists) {
       return res.status(400).json({ message: "Service already exists" });
     }
 
-    const newService = new Service({
+    // Create and save in one operation
+    const newService = await Service.create({
       title,
       description,
       detailPage,
       details: parsedDetails,
-      imageFile: req.file ? req.file.path : null, // Cloudinary URL
+      imageFile: req.file?.path || null,
     });
 
-    await newService.save();
-    res.status(201).json(newService);
+    // Non-blocking email notification
+    sendEmail(
+      process.env.ADMIN_EMAIL || 'admin@example.com',
+      `New Service Created: ${newService.title}`,
+      `A new service "${newService.title}" has been created.`,
+      `
+        <h1>New Service Created</h1>
+        <p>A new service has been added:</p>
+        <ul>
+          <li><strong>Title:</strong> ${newService.title}</li>
+          <li><strong>Description:</strong> ${newService.description}</li>
+          <li><strong>Detail Page:</strong> ${newService.detailPage}</li>
+        </ul>
+      `
+    ).catch(err => console.error("Email failed:", err));
+
+    return res.status(201).json(newService);
   } catch (error) {
     console.error("Error creating service:", error);
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ 
+      message: error.name === 'SyntaxError' 
+        ? "Invalid JSON format" 
+        : "Internal server error" 
+    });
   }
 };
 
 exports.getAllServices = async (req, res) => {
   try {
-    const services = await Service.find();
-    res.status(200).json(services);
+    // Lean query for better performance with only needed fields
+    const services = await Service.find()
+      .select('title description detailPage imageFile')
+      .lean()
+      .exec();
+      
+    return res.status(200).json(services);
   } catch (error) {
     console.error("Error fetching services:", error);
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
 exports.getServiceById = async (req, res) => {
   try {
-    const service = await Service.findById(req.params.id);
+    // Lean query with projection
+    const service = await Service.findById(req.params.id)
+      .select('-__v -createdAt -updatedAt')
+      .lean()
+      .exec();
+
     if (!service) {
       return res.status(404).json({ message: "Service not found" });
     }
-    res.status(200).json(service);
+    return res.status(200).json(service);
   } catch (error) {
     console.error("Error fetching service:", error);
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -93,67 +104,70 @@ exports.updateServiceById = async (req, res) => {
 
     const { title, description, detailPage, details } = req.body;
 
+    // Early validation
     if (!title || !description || !detailPage || !details) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    let parsedDetails;
-    if (typeof details === "string") {
-      try {
-        parsedDetails = JSON.parse(details);
-      } catch (error) {
-        return res
-          .status(400)
-          .json({ message: "Invalid JSON format for details" });
-      }
-    } else {
-      parsedDetails = details;
-    }
+    // Efficient details parsing
+    const parsedDetails = typeof details === "string" 
+      ? JSON.parse(details) 
+      : details;
 
-    if (
-      !parsedDetails.highlights ||
-      !Array.isArray(parsedDetails.highlights) ||
-      !parsedDetails.tips ||
-      !Array.isArray(parsedDetails.tips) ||
-      !parsedDetails.whatsapp ||
-      !parsedDetails.email
-    ) {
+    // Combined validation
+    if (!Array.isArray(parsedDetails?.highlights) || 
+        !Array.isArray(parsedDetails?.tips) ||
+        !parsedDetails?.whatsapp || 
+        !parsedDetails?.email) {
       return res.status(400).json({ message: "Invalid details format" });
     }
 
+    // Optimized findAndUpdate with projection
     const updatedService = await Service.findByIdAndUpdate(
       req.params.id,
       {
-        title,
-        description,
-        detailPage,
-        details: parsedDetails,
-        imageFile: req.file ? req.file.path : undefined,
+        $set: {
+          title,
+          description,
+          detailPage,
+          details: parsedDetails,
+          ...(req.file && { imageFile: req.file.path })
+        }
       },
-      { new: true }
-    );
+      { 
+        new: true,
+        runValidators: true,
+        lean: true 
+      }
+    ).exec();
 
     if (!updatedService) {
       return res.status(404).json({ message: "Service not found" });
     }
 
-    res.status(200).json(updatedService);
+    return res.status(200).json(updatedService);
   } catch (error) {
     console.error("Error updating service:", error);
-    res
-      .status(500)
-      .json({ message: "Internal server error", error: error.message });
+    return res.status(500).json({ 
+      message: error.name === 'ValidationError' 
+        ? "Validation failed" 
+        : "Internal server error" 
+    });
   }
 };
+
 exports.deleteServiceById = async (req, res) => {
   try {
-    const deletedService = await Service.findByIdAndDelete(req.params.id);
-    if (!deletedService) {
+    // Direct deletion without fetching first
+    const result = await Service.deleteOne({ _id: req.params.id }).exec();
+    
+    if (result.deletedCount === 0) {
       return res.status(404).json({ message: "Service not found" });
     }
-    res.status(200).json({ message: "Service deleted successfully" });
+    
+    return res.status(200).json({ message: "Service deleted successfully" });
   } catch (error) {
     console.error("Error deleting service:", error);
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };

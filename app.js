@@ -1,112 +1,98 @@
-require("dotenv").config();
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const bodyParser = require("body-parser");
-const path = require("path");
-const fs = require("fs");
-const session = require("express-session");
-const compression = require("compression");
+// Load environment variables first
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
 
-const galleryRoutes = require("./routes/galleryRoutes");
-const ibirwaClientsRoutes = require("./routes/ibirwaClientsRoutes");
-const contactRoutes = require("./routes/contactRoutes");
-const serviceRoutes = require("./routes/ServiceRoutes");
-const userRoutes = require("./routes/userRoutes");
-const tourInquiryRoutes = require("./routes/tourInquiry.routes");
+const express = require('express');
+const path = require('path');
+const cors = require('cors');
+const session = require('express-session');
+const compression = require('compression');
+const connectDB = require('./config/db');
+const logger = require('./utils/logger'); // Optional
+
+// Initialize app
 const app = express();
 const PORT = process.env.PORT || 5000;
-const NODE_ENV = process.env.NODE_ENV || "development";
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
-const publicDir = path.join(__dirname, "public");
-const uploadsDir = path.join(publicDir, "uploads");
 
-if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir);
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+// ================= MIDDLEWARE =================
+app.use(compression());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
-
-app.use(compression()); 
-app.use(bodyParser.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "https://ibirwa-kivu-bike-tours.netlify.app",
-    ],
-    methods: ["POST", "PUT", "GET", "DELETE", "OPTIONS", "HEAD"],
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-  );
-  if (req.method === "OPTIONS") {
-    res.header("Access-Control-Allow-Methods", "PUT, POST, PATCH, DELETE, GET");
-    return res.status(200).json({});
+// Session middleware (only if needed)
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'default-secret',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { 
+    secure: NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000 // 1 day
   }
-  next();
-});
-app.use("/uploads", express.static(uploadsDir));
-app.options("*", cors());
+}));
 
-app.use(express.static("public"));
+// CORS configuration
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://ibirwa-kivu-bike-tours.netlify.app'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "default-secret",
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: NODE_ENV === "production" }, // Secure in production
-  })
-);
+// Static files
+app.use(express.static( path.join(__dirname, "public")));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-const mongoURI =
-  process.env.MONGO_URI || "mongodb://localhost:27017/kivu-back-end";
+// View engine
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
-mongoose
-  .connect(mongoURI)
-  .then(() => console.log("MongoDB connected successfully"))
-  .catch((err) => {
-    console.error("MongoDB connection error:", err.message);
-    process.exit(1);
-  });
+// ================= ROUTES =================
+app.use('/api/gallery', require('./routes/galleryRoutes'));
+app.use('/api/ibirwa-clients', require('./routes/ibirwaClientsRoutes'));
+app.use('/api', require('./routes/contactRoutes'));
+app.use('/api/services', require('./routes/ServiceRoutes'));
+app.use('/api/inquiries', require('./routes/tourInquiry.routes'));
 
-app.use("/api/gallery", galleryRoutes);
-app.use("/api/ibirwa-clients", ibirwaClientsRoutes);
-app.use("/api", contactRoutes);
-app.use("/api/services", serviceRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/inquiries", tourInquiryRoutes);
-
-
-
-app.use((err, req, res, next) => {
-  console.error("An error occurred:", err.message);
-  res.status(err.status || 500).json({
-    message: err.message || "Internal Server Error",
-    error: NODE_ENV === "development" ? err : {}, 
-  });
-});
-
+// ================= ERROR HANDLING =================
 app.use((req, res) => {
   res.status(404).render('confirmationSuccess');
 });
 
-app.listen(PORT, () => {
-  console.log(
-    "-------------------------------------------------------------------------------"
-  );
-  console.log(
-    `🚀 Server running in ${NODE_ENV} mode on http://localhost:${PORT}`
-  );
-  console.log(
-    "-------------------------------------------------------------------------------"
-  );
+app.use((err, req, res, next) => {
+  logger.error(`Error: ${err.stack}`);
+  res.status(err.status || 500).json({
+    message: err.message || 'Internal Server Error',
+    error: NODE_ENV === 'development' ? err.stack : {}
+  });
 });
+
+// ================= START SERVER =================
+const startServer = async () => {
+  try {
+    await connectDB();
+    const server = app.listen(PORT, () => {
+      logger.info(`Server running in ${NODE_ENV} mode on port ${PORT}`);
+      console.log('\n-----------------------------------------------');
+      console.log(`🚀 Server running in ${NODE_ENV} mode at http://localhost:${PORT} `);
+      console.log('-----------------------------------------------\n');
+    });
+
+    process.on('unhandledRejection', (err) => {
+      logger.error(`Unhandled Rejection: ${err}`);
+      server.close(() => process.exit(1));
+    });
+  } catch (error) {
+    logger.error(`Server failed to start: ${error}`);
+    process.exit(1);
+  }
+};
+
+startServer();

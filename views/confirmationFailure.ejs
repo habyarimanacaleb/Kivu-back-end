@@ -99,12 +99,11 @@
   </style>
 </head>
 <body>
-  <!-- Loading Animation -->
+
   <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-spinner"></div>
   </div>
 
-  <!-- Message Container -->
   <div class="message-container">
     <h1>❌ Email Confirmation Failed!</h1>
     <p>
@@ -114,18 +113,17 @@
   </div>
 
   <script>
-    // Redirect function
+
     function redirectToSupport() {
-      // Replace '/' with the actual route to your support page
+
       window.location.href = 'https://ibirwa-kivu-bike-tours.netlify.app';
     }
 
-    // Simulate loading animation
     window.onload = function () {
       const loadingOverlay = document.getElementById('loadingOverlay');
       setTimeout(() => {
         loadingOverlay.style.display = 'none';
-      }, 1500); // Adjust the timeout as needed
+      }, 1500); 
     };
   </script>
 </body>

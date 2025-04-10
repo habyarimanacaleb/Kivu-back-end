@@ -3,19 +3,6 @@ require("dotenv").config();
 const User = require("../models/userModel");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const nodemailer = require("nodemailer");
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
-  secure: process.env.SMTP_SECURE === "true", // Use SSL
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-});
 exports.signup = async (req, res) => { 
   try {
     const { email, username, password, role } = req.body;
@@ -34,8 +21,6 @@ exports.signup = async (req, res) => {
         message: "User already exists with that email or Username." 
       });
     }
-
-    // Hash the password before saving
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -48,38 +33,35 @@ exports.signup = async (req, res) => {
       isConfirmed: false,
     });
     await newUser.save();
+    
     const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
-    const confirmationUrl = `${process.env.BASE_URL}/api/users/confirm-email/${token}`;
-    const mailOptions = {
-      from: `"Ibirwa Kivu Bike Tour Services" <${process.env.SMTP_USER}>`,
-      to: newUser.email,
-      subject: "Email Confirmation",
-      html: `
+    
+    const confirmationUrl = `${process.env.BASE_URL}/api/ibirwa-clients/confirm-email/${token}`;
+    await sendEmail(
+      newUser.email,
+      "Email Confirmation",
+      `Please confirm your account by visiting this link: ${confirmationUrl}`,
+      `
         <p>Dear ${username},</p>
         <p>Thank you for registering to our website.</p>
         <p>Please click <a href='${confirmationUrl}'>Here</a> to confirm your account.</p>
-      `,
-    };
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.error("Error sending confirmation email:", error);
-        return res.status(500).json({ message: "Error sending confirmation email. Please try again later." });
-      }
-      if (info.rejected.length > 0) {
-        console.error("Email rejected:", info.rejected);
-        return res.status(500).json({ message: "Email rejected. Please check the email address." });
-      }
-      console.log("Confirmation email sent:", info.response);
-      res.status(201).json({ message: "Signup successful! Please check your email to confirm your account.", user: newUser });
-      console.log("Email confirmation sent to:", newUser.email);
+      `
+    );
+
+    res.status(201).json({ 
+      message: "Signup successful! Please check your email to confirm your account.", 
+      user: newUser 
     });
+    console.log("Email confirmation sent to:", newUser.email);
+
   } catch (error) {
     console.error("Signup error:", error);
     res.status(500).json({ message: "Server error occurred. Please try again later." });
   }
 };
+
 exports.confirmEmail = async (req, res) => {
   try {
     const { token } = req.params;
@@ -101,56 +83,6 @@ exports.confirmEmail = async (req, res) => {
   }
 };
 
-exports.getUserProfile = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId).select("-password");
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    res.json(user);
-  } catch (error) {
-    console.error("Error fetching user profile:", error.message);
-    res
-      .status(500)
-      .json({ message: "Error fetching user profile", error: error.message });
-  }
-};
-exports.updateUserProfile = async (req, res) => {
-  try {
-    const { username, email } = req.body;
-    const user = await User.findById(req.user.userId);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    user.username = username || user.username;
-    user.email = email || user.email;
-
-    await user.save();
-
-    res.json({ message: "User profile updated successfully", user });
-  } catch (error) {
-    console.error("Error updating user profile:", error.message);
-    res
-      .status(500)
-      .json({ message: "Error updating user profile", error: error.message });
-  }
-};
-exports.deleteUser = async (req, res) => {
-  try {
-    const user = await User.findByIdAndDelete(req.user.userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    res.json({ message: "User deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting user:", error.message);
-    res
-      .status(500)
-      .json({ message: "Error deleting user", error: error.message });
-  }
-};
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -209,6 +141,58 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+exports.getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json(user);
+  } catch (error) {
+    console.error("Error fetching user profile:", error.message);
+    res
+      .status(500)
+      .json({ message: "Error fetching user profile", error: error.message });
+  }
+};
+exports.updateUserProfile = async (req, res) => {
+  try {
+    const { username, email } = req.body;
+    const user = await User.findById(req.user.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.username = username || user.username;
+    user.email = email || user.email;
+
+    await user.save();
+
+    res.json({ message: "User profile updated successfully", user });
+  } catch (error) {
+    console.error("Error updating user profile:", error.message);
+    res
+      .status(500)
+      .json({ message: "Error updating user profile", error: error.message });
+  }
+};
+exports.deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting user:", error.message);
+    res
+      .status(500)
+      .json({ message: "Error deleting user", error: error.message });
+  }
+};
+
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await User.find({});
