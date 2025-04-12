@@ -44,6 +44,7 @@ exports.createService = async (req, res) => {
         </ul>
       `
     ).catch(err => console.error("Email failed:", err));
+    await newService.save();
     return res.status(201).json(newService);
   } catch (error) {
     console.error("Error creating service:", error);
@@ -67,22 +68,46 @@ exports.getAllServices = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-
-exports.getServiceById = async (req, res) => {
+exports.getServiceImages = async (req, res) => {
   try {
-    // Lean query with projection
-    const service = await Service.findById(req.params.id)
-      .select('-__v -createdAt -updatedAt')
+    const images = await Service.find({ imageFile: { $ne: null } })
+      .select('imageFile')
       .lean()
       .exec();
 
-    if (!service) {
-      return res.status(404).json({ message: "Service not found" });
-    }
-    return res.status(200).json(service);
+    return res.status(200).json({
+      success: true,
+      message: "Service images retrieved successfully",
+      data: images.map(image => image.imageFile)
+    });
+
   } catch (error) {
-    console.error("Error fetching service:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Error fetching service images:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+};
+
+
+exports.getServiceById = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: 'Invalid service ID' });
+  }
+
+  try {
+    const service = await Service.findById(id);
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+    res.status(200).json(service);
+  } catch (error) {
+    console.error('Error fetching service:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
