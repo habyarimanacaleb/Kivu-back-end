@@ -2,23 +2,21 @@ const TourInquiry = require("../models/tourInquiry.model");
 const nodemailer = require("nodemailer");
 require("dotenv").config();
 
-// Configure Nodemailer transporter
 const transporter = nodemailer.createTransport({
-  service: "gmail", // You can change this to Outlook, Yahoo, etc.
+  service: "gmail", 
   auth: {
-    user: process.env.ADMIN_EMAIL, // Admin email
-    pass: process.env.ADMIN_EMAIL_PASSWORD, // App password (not your main email password)
+    user: process.env.ADMIN_EMAIL, 
+    pass: process.env.ADMIN_EMAIL_PASSWORD, 
   },
   tls: {
-    rejectUnauthorized: false, // ✅ Allow self-signed certificates
+    rejectUnauthorized: false, 
   },
 });
 
-// Function to send an email notification
 const sendEmailNotification = async (inquiry) => {
   const mailOptions = {
     from: inquiry.email,
-    to: process.env.ADMIN_EMAIL, // Send the email to the admin
+    to: process.env.ADMIN_EMAIL, 
     subject: "New Tour Inquiry Received",
     text: `
       A new tour inquiry has been submitted:
@@ -112,7 +110,7 @@ exports.respondToInquiry = async (req, res) => {
     // Email details
     const mailOptions = {
       from: process.env.ADMIN_EMAIL,
-      to: inquiry.email, // Send response to the user's email
+      to: inquiry.email,
       subject: "Response to Your Tour Inquiry",
       text: `
         Dear ${inquiry.name || "Customer"},

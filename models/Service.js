@@ -12,7 +12,11 @@ const ServiceSchema = new mongoose.Schema({
     email: { type: String, required: true },
   },
   createdAt: { type: Date, default: Date.now },
-});
+},
+{
+  timestamps: true,
+}
+);
 
 const Service = mongoose.model("Service", ServiceSchema);
 module.exports = Service;

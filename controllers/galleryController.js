@@ -7,11 +7,7 @@ const upload = require("../middleware/upload");
 exports.createGalleryCard = async (req, res) => {
   try {
     const { title } = req.body;
-    const imageUrl = req.file?.path; // Cloudinary URL
-
-    console.log("Request Headers:", req.headers);
-    console.log("Request Body:", req.body);
-    console.log("Uploaded File:", req.file);
+    const imageUrl = req.file?.path;
 
     // Validate required fields
     if (!title || !imageUrl) {
@@ -49,19 +45,21 @@ exports.createGalleryCard = async (req, res) => {
 exports.getAllPhotos = async (req, res) => {
   try {
     const { page = 1, limit = 10, title, showAll } = req.query;
-
     const query = {};
 
-    // Optional filter by title (case-insensitive)
     if (title) {
       query.title = { $regex: title, $options: "i" };
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const photos = showAll === "true"
-      ? await Photo.find(query).sort({ createdAt: -1 })
-      : await Photo.find(query).skip(skip).limit(parseInt(limit)).sort({ createdAt: -1 });
+    const photos =
+      showAll === "true"
+        ? await Photo.find(query).sort({ createdAt: -1 })
+        : await Photo.find(query)
+            .skip(skip)
+            .limit(parseInt(limit))
+            .sort({ createdAt: -1 });
 
     const total = await Photo.countDocuments(query);
 
@@ -117,9 +115,20 @@ exports.updateGalleryCard = async (req, res) => {
 
     // Handle new image upload
     if (req.file) {
-      const oldImagePublicId = photo.imageFile.split("/").pop().split(".")[0];
-      await upload.uploader.destroy(oldImagePublicId);
+      // Extract Cloudinary public ID from the URL
+      const oldImagePublicId = photo.imageFile
+        .split("/")
+        .pop()
+        .split(".")[0];
 
+      try {
+        // Remove previous image from cloudinary
+        await upload.uploader.destroy(oldImagePublicId);
+      } catch (err) {
+        console.warn("Failed to delete previous image from Cloudinary:", err);
+      }
+
+      // Assign new uploaded image
       photo.imageFile = req.file.path;
     }
 
@@ -141,6 +150,14 @@ exports.deleteGalleryCard = async (req, res) => {
 
     if (!photo) {
       return res.status(404).json({ message: "Photo not found" });
+    }
+
+    // Delete image from Cloudinary
+    try {
+      const publicId = photo.imageFile.split("/").pop().split(".")[0];
+      await upload.uploader.destroy(publicId);
+    } catch (err) {
+      console.warn("Failed to delete image from Cloudinary:", err);
     }
 
     await Photo.findByIdAndDelete(id);
