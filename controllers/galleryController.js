@@ -26,7 +26,13 @@ exports.createGalleryCard = async (req, res) => {
         .json({ message: "File size too large (Max: 5MB)" });
     }
 
-    // Create new gallery card
+    // Check if a card with the same title exists
+    const exists = await Photo.exists({ title }).lean();
+    if (exists) {
+      return res.status(400).json({ message: "Gallery card already exists" });
+    }
+
+    // Create and save new gallery card
     const newCard = new Photo({ title, imageFile: imageUrl });
     await newCard.save();
 
@@ -35,9 +41,12 @@ exports.createGalleryCard = async (req, res) => {
       gallery: newCard,
     });
   } catch (error) {
+    console.error("Error creating gallery card:", error);
     res.status(500).json({ message: "Error creating gallery card", error });
   }
 };
+
+
 
 /**
  * Get All Gallery Photos with Filters & Pagination
@@ -68,7 +77,7 @@ exports.getAllPhotos = async (req, res) => {
       limit: showAll === "true" ? total : parseInt(limit),
       total,
       totalPages: showAll === "true" ? 1 : Math.ceil(total / limit),
-      results: photos,
+      data: photos,
     });
   } catch (error) {
     console.error("Error fetching photos:", error);
