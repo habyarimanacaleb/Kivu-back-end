@@ -44,3 +44,18 @@
 2025-04-13T00:20:18.022Z [info]: Server running in development mode on port 3001
 2025-04-15T00:36:42.549Z [info]: Server running in development mode on port 3001
 2025-04-15T00:43:54.892Z [info]: Server running in development mode on port 3001
+2025-04-15T00:46:01.043Z [info]: Server running in development mode on port 3001
+2025-04-15T00:49:51.854Z [info]: Server running in development mode on port 3001
+2025-04-15T01:16:45.571Z [error]: Unhandled Rejection: ReferenceError: mongoose is not defined
+2025-04-15T01:23:22.564Z [info]: Server running in development mode on port 3001
+2025-04-15T01:29:52.775Z [info]: Server running in development mode on port 3001
+2025-04-15T01:30:40.805Z [info]: Server running in development mode on port 3001
+2025-04-15T01:30:53.559Z [info]: Server running in development mode on port 3001
+2025-04-15T01:36:37.191Z [info]: Server running in development mode on port 3001
+2025-04-15T01:37:10.738Z [info]: Server running in development mode on port 3001
+2025-04-15T01:39:23.285Z [info]: Server running in development mode on port 3001
+2025-04-15T01:41:04.517Z [info]: Server running in development mode on port 3001
+2025-04-15T01:45:29.443Z [info]: Server running in development mode on port 3001
+2025-04-15T01:48:47.855Z [info]: Server running in development mode on port 3001
+2025-04-15T01:49:03.153Z [info]: Server running in development mode on port 3001
+2025-04-15T01:49:09.217Z [info]: Server running in development mode on port 3001
