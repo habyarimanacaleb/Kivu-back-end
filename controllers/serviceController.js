@@ -23,13 +23,6 @@ exports.createService = async (req, res) => {
       return res.status(400).json({ message: "Service already exists" });
     }
 
-    const newService = await Service.create({
-      title,
-      description,
-      detailPage,
-      details: parsedDetails,
-      imageFile: req.file?.path || null,
-    });
     sendEmail(
       process.env.ADMIN_EMAIL || 'admin@example.com',
       `New Service Created: ${newService.title}`,
@@ -44,6 +37,17 @@ exports.createService = async (req, res) => {
         </ul>
       `
     ).catch(err => console.error("Email failed:", err));
+
+    
+    const newService = await Service.create({
+      title,
+      description,
+      detailPage,
+      details: parsedDetails,
+      imageFile: req.file?.path || null,
+    });
+    console.log({ title, description, detailPage, parsedDetails });
+    console.log("New service created:", newService);
     await newService.save();
     return res.status(201).json(newService);
   } catch (error) {
@@ -58,7 +62,7 @@ exports.createService = async (req, res) => {
 exports.getAllServices = async (req, res) => {
   try {
     const services = await Service.find()
-      .select('title description detailPage imageFile')
+      .select('title description details imageFile')
       .lean()
       .exec();
       
