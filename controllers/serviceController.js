@@ -77,6 +77,7 @@ exports.getAllServices = async (req, res) => {
         .select('title description details imageFile')
         .skip(skip)
         .limit(limit)
+        .sort({ createdAt: -1 })
         .lean()
         .exec(),
       Service.countDocuments()
@@ -101,6 +102,7 @@ exports.getServiceImages = async (req, res) => {
     const images = await Service.find({ imageFile: { $ne: null } })
       .select('imageFile')
       .lean()
+      .sort({ createdAt: -1 })
       .exec();
 
     return res.status(200).json({
@@ -142,7 +144,7 @@ exports.updateServiceById = async (req, res) => {
   try {
     const { title, description, detailPage, details } = req.body;
 
-    if (!title || !detailPage) {
+    if (!title) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
