@@ -60,6 +60,7 @@ app.use('/api/ibirwa-clients', require('./routes/ibirwaClientsRoutes'));
 app.use('/api', require('./routes/contactRoutes'));
 app.use('/api/services', require('./routes/ServiceRoutes'));
 app.use('/api/inquiries', require('./routes/tourInquiry.routes'));
+app.use("/api/reviews", require("./routes/review.routes"));
 
 // ================= ERROR HANDLING =================
 app.use((req, res) => {
