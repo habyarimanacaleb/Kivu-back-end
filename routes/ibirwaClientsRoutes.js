@@ -6,13 +6,12 @@ const authMiddleware = require("../middleware/authMiddleware");
 
 
 router.post("/signup", userController.signup);
-router.post("/confirm-email", userController.confirmEmail);
+// router.post("/confirm-email", userController.confirmEmail);
 router.post("/login", userController.login);
 router.post("/logout", userController.logout);
-router.put("/users/:id", userController.updateUserProfile);
-router.put("/profile", authMiddleware, userController.updateUserProfile);
-router.delete("/users/:id", userController.deleteUser);
-router.delete("/profile", authMiddleware, userController.deleteUser);
+router.put("/user/:id", userController.updateUserProfile);
+// router.put("/profile", authMiddleware, userController.updateUserProfile);
+router.delete("/user/:id",authMiddleware, userController.deleteUser);
 router.get("/users", userController.getAllUsers);
 router.get("/confirm-email/:token", userController.confirmEmail);
 router.get("/session", userController.getSessionData);
