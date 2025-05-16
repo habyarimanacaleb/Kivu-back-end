@@ -12,6 +12,7 @@ router.post("/logout", userController.logout);
 router.put("/user/:id", userController.updateUserProfile);
 // router.put("/profile", authMiddleware, userController.updateUserProfile);
 router.delete("/user/:id",authMiddleware, userController.deleteUser);
+router.patch("/user/:id/block", userController.blockOrUnblockUser);
 router.get("/users", userController.getAllUsers);
 router.get("/confirm-email/:token", userController.confirmEmail);
 router.get("/session", userController.getSessionData);
