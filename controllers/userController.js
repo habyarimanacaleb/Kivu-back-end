@@ -169,19 +169,23 @@ exports.getUserProfile = async (req, res) => {
 
 exports.updateUserProfile = async (req, res) => {
   try {
-    const { username, email } = req.body;
-    const user = await User.findById(req.user.userId);
-
-    if (!user) {
+    const {id} = req.params;
+  const updateUser= await User.findByIdAndUpdate(
+      id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!updateUser) {
       return res.status(404).json({ message: "User not found" });
     }
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(updateUser.password, salt);
+     updateUser.password = hashedPassword;
+    
+  console.log("User updated successfully:", updateUser);
+    await updateUser.save();
 
-    user.username = username || user.username;
-    user.email = email || user.email;
-
-    await user.save();
-
-    res.json({ message: "User profile updated successfully", user });
+    res.json({ message: "User profile updated successfully", updateUser });
   } catch (error) {
     console.error("Error updating user profile:", error.message);
     res
@@ -189,6 +193,30 @@ exports.updateUserProfile = async (req, res) => {
       .json({ message: "Error updating user profile", error: error.message });
   }
 };
+
+exports.blockOrUnblockUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { blocked } = req.body;
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.blocked = blocked;
+    await user.save();
+
+    res.status(200).json({
+      message: `User has been ${blocked ? "blocked" : "unblocked"} successfully.`,
+      user,
+    });
+  } catch (error) {
+    console.error("Error updating block status:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 
 exports.deleteUser = async (req, res) => {
   try {
