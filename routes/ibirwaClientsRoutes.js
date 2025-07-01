@@ -4,13 +4,10 @@ const userController = require("../controllers/userController");
 const verifyUserRole = require("../middleware/verifyUserRole");
 const authMiddleware = require("../middleware/authMiddleware");
 
-
 router.post("/signup", userController.signup);
-// router.post("/confirm-email", userController.confirmEmail);
 router.post("/login", userController.login);
 router.post("/logout", userController.logout);
 router.put("/user/:id", userController.updateUserProfile);
-// router.put("/profile", authMiddleware, userController.updateUserProfile);
 router.delete("/user/:id",authMiddleware, userController.deleteUser);
 router.patch("/user/:id/block", userController.blockOrUnblockUser);
 router.get("/users", userController.getAllUsers);
