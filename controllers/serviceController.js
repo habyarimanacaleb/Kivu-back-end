@@ -5,8 +5,6 @@ exports.createService = async (req, res) => {
   try {
     const { title, description, detailPage, details } = req.body;
 
-    console.log('Request Body:', req.body);  // Log the incoming request
-
     if (!title || !description || !detailPage || !details) {
       return res.status(400).json({ message: "Missing required fields" });
     }
@@ -14,9 +12,6 @@ exports.createService = async (req, res) => {
     const parsedDetails = typeof details === "string" 
       ? JSON.parse(details) 
       : details;
-
-    console.log('Parsed Details:', parsedDetails);
-
     if (!Array.isArray(parsedDetails?.highlights) || 
         !Array.isArray(parsedDetails?.tips) ||
         !parsedDetails?.whatsapp || 
@@ -36,9 +31,6 @@ exports.createService = async (req, res) => {
       details: parsedDetails,
       imageFile: req.file?.path || null,
     });
-
-    console.log('New Service Created:', newService);
-
     sendEmail(
       process.env.ADMIN_EMAIL || 'admin@example.com',
       `New Service Created: ${newService.title}`,
@@ -53,7 +45,9 @@ exports.createService = async (req, res) => {
         </ul>
       `
     ).catch(err => console.error("Email failed:", err));
-
+    console.log('Email sent successfully');
+  // email sent to admin
+    console.log('Service created successfully:', newService);
     return res.status(201).json(newService);
 
   } catch (error) {
