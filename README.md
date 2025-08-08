@@ -1,9 +1,12 @@
 # Kivu Back-End
 
+<img width="930" height="365" alt="image" src="https://github.com/user-attachments/assets/7d169b74-7ee7-4c23-bd21-bac984202e9e" />
+---
 ## 🌍 About This Project
 This is the **server-side system** for the **Ibirwa Kivu Bike Tours platform**.  
 It works hand-in-hand with the website to:
-- Store and manage **tour information**, **bookings**, and **user details**.
+- Store and manage **tour information**, **bookings**, and **user details**.                                                                            
+
 - Allow **admins** to add and update content.
 - Let customers **browse tours**, **check details**, and **book online**.
 
