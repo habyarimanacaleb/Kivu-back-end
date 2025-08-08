@@ -73,19 +73,6 @@ Some actions (like adding or updating tours) are for **admins only**.
 
 ---
 
----
-## 📊 System Flow Diagram
-flowchart TD
-    A[Visitor Opens Website] --> B[Front-End Requests Data]
-    B --> C[Back-End API]
-    C --> D[(Database)]
-    C -->|If Booking| E[Store Booking]
-    C -->|If Admin Login| F[Verify Credentials]
-    F -->|Success| G[Admin Dashboard]
-    G --> H[Manage Tours & View Bookings]
-    D --> B
-
-
     ##📈 Version
 1.0.0 – First release with:
 
