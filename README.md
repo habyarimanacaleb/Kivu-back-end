@@ -73,25 +73,6 @@ Some actions (like adding or updating tours) are for **admins only**.
 
 ---
 
-## 🚀 How to Use Locally (For Developers)
-```bash
-# 1. Clone this repository
-git clone https://github.com/habyarimanacaleb/Kivu-back-end.git
-
-# 2. Go into the folder
-cd Kivu-back-end
-
-# 3. Install the needed packages
-npm install
-
-# 4. Create a file called .env and add:
-PORT=5000
-MONGO_URI=your_database_link
-JWT_SECRET=your_secret_key
-
-# 5. Start the server
-npm run dev
-
 ---
 ## 📊 System Flow Diagram
 flowchart TD
@@ -105,9 +86,7 @@ flowchart TD
     D --> B
 
 
----
-
-##📈 Version
+    ##📈 Version
 1.0.0 – First release with:
 
 - Tour management
@@ -130,7 +109,31 @@ If you want to improve this project:
 ## 📜 License
 Project MIT License.
 
-You can just **copy-paste** this into your project’s `README.md` file and commit it to GitHub.  
+You can just **copy-paste** this into your project’s `README.md` file and commit it to GitHub. 
+
+---
+
+## 🚀 How to Use Locally (For Developers)
+```bash
+# 1. Clone this repository
+git clone https://github.com/habyarimanacaleb/Kivu-back-end.git
+
+# 2. Go into the folder
+cd Kivu-back-end
+
+# 3. Install the needed packages
+npm install
+
+# 4. Create a file called .env and add:
+PORT=5000
+MONGO_URI=your_database_link
+JWT_SECRET=your_secret_key
+
+# 5. Start the server
+npm run dev
+---
+
+ 
 
 
 
