@@ -133,6 +133,19 @@ JWT_SECRET=your_secret_key
 npm run dev
 ---
 
+---
+## 📊 System Flow Diagram
+flowchart TD
+    A[Visitor Opens Website] --> B[Front-End Requests Data]
+    B --> C[Back-End API]
+    C --> D[(Database)]
+    C -->|If Booking| E[Store Booking]
+    C -->|If Admin Login| F[Verify Credentials]
+    F -->|Success| G[Admin Dashboard]
+    G --> H[Manage Tours & View Bookings]
+    D --> B
+
+
  
 
 
