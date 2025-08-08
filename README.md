@@ -93,6 +93,19 @@ JWT_SECRET=your_secret_key
 npm run dev
 
 ---
+## 📊 System Flow Diagram
+flowchart TD
+    A[Visitor Opens Website] --> B[Front-End Requests Data]
+    B --> C[Back-End API]
+    C --> D[(Database)]
+    C -->|If Booking| E[Store Booking]
+    C -->|If Admin Login| F[Verify Credentials]
+    F -->|Success| G[Admin Dashboard]
+    G --> H[Manage Tours & View Bookings]
+    D --> B
+
+
+---
 
 ##📈 Version
 1.0.0 – First release with:
@@ -119,7 +132,7 @@ Project MIT License.
 
 You can just **copy-paste** this into your project’s `README.md` file and commit it to GitHub.  
 
-If you want, I can **add a simple architecture flow diagram** to this so visitors see exactly how your front-end and back-end connect. That would make it even more attractive.
+
 
 
 
