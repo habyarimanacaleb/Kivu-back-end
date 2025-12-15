@@ -66,7 +66,6 @@ app.use("/api/reviews", require("./routes/review.routes"));
 app.get('/', (req, res) => {
   res.status(200).render('ServerSuccess');
 });
-
 // 404 page (any unmatched route)
 app.use((req, res) => {
   res.status(404).render('ServerFailed');
@@ -100,5 +99,4 @@ const startServer = async () => {
     process.exit(1);
   }
 };
-
 startServer();
