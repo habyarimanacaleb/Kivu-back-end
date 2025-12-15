@@ -1,5 +1,7 @@
 const Photo = require("../models/photo");
 const upload = require("../middleware/upload");
+const Service = require("../models/Service");
+const uploadToCloudinary = require("../utils/cloudinaryUpload");
 
 /**
  * Create Gallery Card (Upload Image & Store Data)
@@ -7,7 +9,11 @@ const upload = require("../middleware/upload");
 exports.createGalleryCard = async (req, res) => {
   try {
     const { title } = req.body;
-    const imageUrl = req.file?.path;
+
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file.buffer);
+      imageUrl = result.secure_url;
+    }
 
     // Validate required fields
     if (!title || !imageUrl) {
@@ -46,14 +52,12 @@ exports.createGalleryCard = async (req, res) => {
   }
 };
 
-
-
 /**
  * Get All Gallery Photos with Filters & Pagination
  */
 exports.getAllPhotos = async (req, res) => {
   try {
-    const { page = 1, limit = 10, title, showAll } = req.query;
+    const { page = 1, limit = 12, title, showAll } = req.query;
     const query = {};
 
     if (title) {
@@ -121,14 +125,10 @@ exports.updateGalleryCard = async (req, res) => {
     if (title) {
       photo.title = title;
     }
-
     // Handle new image upload
     if (req.file) {
       // Extract Cloudinary public ID from the URL
-      const oldImagePublicId = photo.imageFile
-        .split("/")
-        .pop()
-        .split(".")[0];
+      const oldImagePublicId = photo.imageFile.split("/").pop().split(".")[0];
 
       try {
         // Remove previous image from cloudinary
@@ -137,8 +137,12 @@ exports.updateGalleryCard = async (req, res) => {
         console.warn("Failed to delete previous image from Cloudinary:", err);
       }
 
+      if (req.file) {
+        const result = await uploadToCloudinary(req.file.buffer);
+        imageUrl = result.secure_url;
+      }
       // Assign new uploaded image
-      photo.imageFile = req.file.path;
+      photo.imageFile = imageUrl;
     }
 
     await photo.save();
