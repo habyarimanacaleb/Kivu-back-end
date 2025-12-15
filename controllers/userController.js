@@ -2,7 +2,7 @@
 require("dotenv").config();
 const User = require("../models/userModel");
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 const { sendEmail } = require("../controllers/emailController");
 
 exports.signup = async (req, res) => {
