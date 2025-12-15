@@ -63,8 +63,13 @@ app.use('/api/inquiries', require('./routes/tourInquiry.routes'));
 app.use("/api/reviews", require("./routes/review.routes"));
 
 // ================= ERROR HANDLING =================
+app.get('/', (req, res) => {
+  res.status(200).render('ServerSuccess');
+});
+
+// 404 page (any unmatched route)
 app.use((req, res) => {
-  res.status(404).render('confirmationSuccess');
+  res.status(404).render('ServerFailed');
 });
 
 app.use((err, req, res, next) => {
