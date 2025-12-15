@@ -17,5 +17,4 @@ router.get("/session", userController.getSessionData);
 router.get("/profile", authMiddleware, userController.getUserProfile);
 router.get("/restricted", verifyUserRole(["admin"]), userController.restricted);
 
-
 module.exports = router;
