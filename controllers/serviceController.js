@@ -156,18 +156,17 @@ exports.updateServiceById = async (req, res) => {
     if (req.body.description) updateData.description = req.body.description;
     if (req.body.detailPage) updateData.detailPage = req.body.detailPage;
 
-    // Handle details only if provided
+    // Handle details
     if (req.body.details) {
       const parsedDetails =
         typeof req.body.details === "string"
           ? JSON.parse(req.body.details)
           : req.body.details;
 
+      // Validate highlights and tips only
       if (
         !Array.isArray(parsedDetails?.highlights) ||
-        !Array.isArray(parsedDetails?.tips) ||
-        !parsedDetails?.whatsapp ||
-        !parsedDetails?.email
+        !Array.isArray(parsedDetails?.tips)
       ) {
         return res.status(400).json({ message: "Invalid details format" });
       }
@@ -175,13 +174,12 @@ exports.updateServiceById = async (req, res) => {
       updateData.details = parsedDetails;
     }
 
-    // Handle image upload
+    // Handle image
     if (req.file) {
       const result = await uploadToCloudinary(req.file.buffer);
       updateData.imageFile = result.secure_url;
     }
 
-    // Prevent empty update
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ message: "No fields provided for update" });
     }
@@ -189,31 +187,25 @@ exports.updateServiceById = async (req, res) => {
     const updatedService = await Service.findByIdAndUpdate(
       req.params.id,
       { $set: updateData },
-      {
-        new: true,
-        runValidators: true,
-        lean: true,
-      }
-    ).exec();
+      { new: true, runValidators: true, lean: true }
+    );
 
     if (!updatedService) {
       return res.status(404).json({ message: "Service not found" });
     }
+
     console.log("BODY:", req.body);
     console.log("FILE:", req.file);
 
     return res.status(200).json(updatedService);
   } catch (error) {
     console.error("Error updating service:", error);
-
     return res.status(500).json({
-      message:
-        error.name === "SyntaxError"
-          ? "Invalid JSON format"
-          : "Internal server error",
+      message: error.name === "SyntaxError" ? "Invalid JSON format" : "Internal server error",
     });
   }
 };
+
 
 exports.deleteServiceById = async (req, res) => {
   try {
