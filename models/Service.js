@@ -3,8 +3,8 @@ const mongoose = require("mongoose");
 const ServiceSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true },
   description: { type: String, required: true, trim: true },
-  detailPage: { type: String, required: true, trim: true },
-  imageFile: { type: String },
+  detailPage: { type: String, trim: true },
+  imageFile: { type: String, trim: true , default: null },
   details: {
     highlights: { type: [String], required: true },
     tips: { type: [String], required: true },
