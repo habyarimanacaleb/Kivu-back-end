@@ -4,22 +4,21 @@ const uploadToCloudinary = require("../utils/cloudinaryUpload");
 
 exports.createService = async (req, res) => {
   try {
-    const { title, description, detailPage, details } = req.body;
+    const { title, description, detailPage,highlights,tips,whatsapp,email } = req.body;
 
-    if (!title || !description || !detailPage || !details) {
+    if (!title || !description || !highlights || !tips || !whatsapp || !email) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    const parsedDetails =
-      typeof details === "string" ? JSON.parse(details) : details;
-    if (
-      !Array.isArray(parsedDetails?.highlights) ||
-      !Array.isArray(parsedDetails?.tips) ||
-      !parsedDetails?.whatsapp ||
-      !parsedDetails?.email
-    ) {
-      return res.status(400).json({ message: "Invalid details format" });
-    }
+    const parsedDetails = {
+      highlights: Array.isArray(highlights)
+        ? highlights
+        : JSON.parse(highlights),
+
+      tips: Array.isArray(tips) ? tips : JSON.parse(tips),
+      whatsapp,
+      email,
+    };
 
     const exists = await Service.exists({ title }).lean();
     if (exists) {
@@ -86,7 +85,7 @@ exports.getAllServices = async (req, res) => {
         .select("title description details imageFile")
         .skip(skip)
         .limit(limit)
-        .sort({ createdAt: -1 })
+        .sort({ createdAt: 1 })
         .lean()
         .exec(),
       Service.countDocuments(),
