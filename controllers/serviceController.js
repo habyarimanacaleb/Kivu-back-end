@@ -77,7 +77,7 @@ exports.createService = async (req, res) => {
 exports.getAllServices = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = parseInt(req.query.limit) || 18;
     const skip = (page - 1) * limit;
 
     const [services, total] = await Promise.all([
