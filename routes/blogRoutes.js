@@ -12,6 +12,7 @@ const blogUploadFields = upload.fields([
 // 100% Free Public Interactions (No signup barrier)
 router.get("/", blogController.getAllBlogs);
 router.get("/:id", blogController.getBlogById);
+router.get("/:slug", blogController.getBlogBySlug);
 router.post("/:id/comments", blogController.addAnonymousComment);
 router.post("/:id/toggle-like", blogController.toggleBlogLike);
 

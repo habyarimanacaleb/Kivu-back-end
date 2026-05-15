@@ -22,6 +22,22 @@ const BlogSchema = new mongoose.Schema({
     required: [true, "A post title is required."],
     trim: true 
   },
+  slug: { 
+    type: String, 
+    required: true, 
+    unique: true,
+    lowercase: true,
+    trim: true 
+  },
+  author: { 
+    type: String, 
+    required: [true, "Author name is required."],
+    trim: true 
+  },
+  tags: { 
+    type: [String], 
+    default: [], 
+  },
   category: { 
     type: String, 
     required: [true, "A specific category classification is required."],
@@ -43,6 +59,11 @@ const BlogSchema = new mongoose.Schema({
   gallery: { 
     type: [String], 
     default: [] 
+  },
+  toursNearby: { 
+    type: [mongoose.Schema.Types.ObjectId], 
+    default: [],
+    ref: "Tour"
   },
   // Holds unique client/device fingerprints string array to track toggles cleanly
   likes: { 

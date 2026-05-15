@@ -45,8 +45,19 @@ exports.getBlogById = async (req, res) => {
 
 // 3. Process & Generate New Log Record
 exports.createBlog = async (req, res) => {
+
+   
+
   try {
-    const { title, category, excerpt, content } = req.body;
+    const { title, category, excerpt, content, author } = req.body;
+   
+    const sluggen = title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    const slug = sluggen.length > 100 ? sluggen.substring(0, 100) : sluggen;
+    const existingSlug = await Blog.findOne({ slug });
+    if (existingSlug) return res.status(400).json({ message: "A blog post with a similar title already exists. Please modify the title to be more unique." });
+
+    const tags = req.body.tags ? (Array.isArray(req.body.tags) ? req.body.tags : [req.body.tags]) : [];
+
     let mainImageUrl = req.body.mainImage; 
     let galleryUrls = [];
 
@@ -69,10 +80,13 @@ exports.createBlog = async (req, res) => {
     // blog exists check
     const existingBlog = await Blog.findOne({ title: title.trim() });
     if (existingBlog) return res.status(400).json({ message: "A blog post with this title already exists. Please choose a different title." });
-    
+
 
     const newBlog = new Blog({
       title,
+        slug,
+        author,
+        tags,
       category,
       excerpt,
       content,
@@ -86,6 +100,18 @@ exports.createBlog = async (req, res) => {
     res.status(400).json({ message: "Payload commit abort.", error: error.message });
   }
 };
+
+// get blog post by slug with populated tour data
+
+exports.getBlogBySlug = async(req,res)=>{
+    try {
+        const blog = await Blog.findOne({ slug: req.params.slug }).populate('toursNearby');
+        if (!blog) return res.status(404).json({ message: "Blog post not found." });
+        res.status(200).json(blog);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching blog post.", error: error.message });
+    }
+}
 
 // 4. Update Existing Record Properties
 exports.updateBlog = async (req, res) => {
