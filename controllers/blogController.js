@@ -1,4 +1,4 @@
-const Blog = require("../models/Blog");
+const Blog = require("../models/blog");
 const cloudinary = require("cloudinary").v2;
 
 // Cloudinary Configuration Matrix
