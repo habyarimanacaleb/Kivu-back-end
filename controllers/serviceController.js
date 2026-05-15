@@ -1,20 +1,20 @@
 const Service = require("../models/Service");
 const { sendEmail } = require("../controllers/emailController");
 const uploadToCloudinary = require("../utils/cloudinaryUpload");
+const cloudinary = require("cloudinary").v2;
 
+// 1. Create a New Service with Grid Gallery Elements
 exports.createService = async (req, res) => {
   try {
-    const { title, description, detailPage,highlights,tips,whatsapp,email } = req.body;
+    const { title, description, detailPage, highlights, tips, whatsapp, email } = req.body;
 
     if (!title || !description || !highlights || !tips || !whatsapp || !email) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
+    // Dynamic extraction parsing for nested multi-string properties
     const parsedDetails = {
-      highlights: Array.isArray(highlights)
-        ? highlights
-        : JSON.parse(highlights),
-
+      highlights: Array.isArray(highlights) ? highlights : JSON.parse(highlights),
       tips: Array.isArray(tips) ? tips : JSON.parse(tips),
       whatsapp,
       email,
@@ -25,10 +25,22 @@ exports.createService = async (req, res) => {
       return res.status(400).json({ message: "Service already exists" });
     }
 
-     let imageUrl = null;
-    if (req.file) {
-      const result = await uploadToCloudinary(req.file.buffer);
+    let imageUrl = null;
+    let galleryUrls = [];
+
+    // Process single hero cover file via multi-fields format mapping
+    if (req.files && req.files['imageFile']?.[0]) {
+      const result = await uploadToCloudinary(req.files['imageFile'][0].buffer);
       imageUrl = result.secure_url;
+    }
+
+    // Process multiple asset files inside the gallery pipeline cleanly
+    if (req.files && req.files['gallery']) {
+      const galleryFiles = Array.isArray(req.files['gallery']) ? req.files['gallery'] : [req.files['gallery']];
+      for (const file of galleryFiles) {
+        const result = await uploadToCloudinary(file.buffer);
+        galleryUrls.push(result.secure_url);
+      }
     }
 
     const newService = await Service.create({
@@ -37,8 +49,10 @@ exports.createService = async (req, res) => {
       detailPage,
       details: parsedDetails,
       imageFile: imageUrl,
+      gallery: galleryUrls
     });
 
+    // Alert dispatch execution
     sendEmail(
       process.env.ADMIN_EMAIL || "admin@example.com",
       `New Service Created: ${newService.title}`,
@@ -53,27 +67,18 @@ exports.createService = async (req, res) => {
         </ul>
       `
     ).catch((err) => console.error("Email failed:", err));
-    console.log("Email sent successfully");
 
-    // email sent to admin
     console.log("Service created successfully:", newService);
     return res.status(201).json(newService);
   } catch (error) {
-    if (req.file?.path) {
-      const publicId = req.file?.path.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(`services/${publicId}`);
-    }
-
     console.error("Error creating service:", error);
     return res.status(500).json({
-      message:
-        error.name === "SyntaxError"
-          ? "Invalid JSON format"
-          : "Internal server error",
+      message: error.name === "SyntaxError" ? "Invalid JSON format" : "Internal server error",
     });
   }
 };
 
+// 2. Fetch Paginated Summary Sets
 exports.getAllServices = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -82,10 +87,10 @@ exports.getAllServices = async (req, res) => {
 
     const [services, total] = await Promise.all([
       Service.find()
-        .select("title description details imageFile")
+        .select("title description details imageFile gallery") 
         .skip(skip)
         .limit(limit)
-        .sort({ createdAt: 1 })
+        .sort({ createdAt: -1 })
         .lean()
         .exec(),
       Service.countDocuments(),
@@ -105,6 +110,7 @@ exports.getAllServices = async (req, res) => {
   }
 };
 
+// 3. Extract All Banner Artifact Links
 exports.getServiceImages = async (req, res) => {
   try {
     const images = await Service.find({ imageFile: { $ne: null } })
@@ -128,12 +134,13 @@ exports.getServiceImages = async (req, res) => {
   }
 };
 
+// 4. Extract Complete Target Entry Properties
 exports.getServiceById = async (req, res) => {
   try {
     const { id } = req.params;
 
     const service = await Service.findById(id)
-      .select("title description detailPage details imageFile")
+      .select("title description detailPage details imageFile gallery") // Explicit gallery validation link
       .lean();
 
     if (!service) {
@@ -147,37 +154,37 @@ exports.getServiceById = async (req, res) => {
   }
 };
 
+// 5. Mutate Existing Service Object Fields
 exports.updateServiceById = async (req, res) => {
   try {
     const updateData = {};
 
-    // Update only provided fields
     if (req.body.title) updateData.title = req.body.title;
     if (req.body.description) updateData.description = req.body.description;
     if (req.body.detailPage) updateData.detailPage = req.body.detailPage;
 
-    // Handle details
     if (req.body.details) {
-      const parsedDetails =
-        typeof req.body.details === "string"
-          ? JSON.parse(req.body.details)
-          : req.body.details;
-
-      // Validate highlights and tips only
-      if (
-        !Array.isArray(parsedDetails?.highlights) ||
-        !Array.isArray(parsedDetails?.tips)
-      ) {
-        return res.status(400).json({ message: "Invalid details format" });
-      }
-
+      const parsedDetails = typeof req.body.details === "string" ? JSON.parse(req.body.details) : req.body.details;
       updateData.details = parsedDetails;
     }
 
-    // Handle image
-    if (req.file) {
-      const result = await uploadToCloudinary(req.file.buffer);
+    // Process modified structural cover image replacement strings
+    if (req.files && req.files['imageFile']?.[0]) {
+      const result = await uploadToCloudinary(req.files['imageFile'][0].buffer);
       updateData.imageFile = result.secure_url;
+    }
+
+    // Process replacement or addition sets into the target grid layout
+    if (req.files && req.files['gallery']) {
+      const updatedGalleryUrls = [];
+      const galleryFiles = Array.isArray(req.files['gallery']) ? req.files['gallery'] : [req.files['gallery']];
+      
+      for (const file of galleryFiles) {
+        const result = await uploadToCloudinary(file.buffer);
+        updatedGalleryUrls.push(result.secure_url);
+      }
+      
+      updateData.gallery = updatedGalleryUrls;
     }
 
     if (Object.keys(updateData).length === 0) {
@@ -194,9 +201,6 @@ exports.updateServiceById = async (req, res) => {
       return res.status(404).json({ message: "Service not found" });
     }
 
-    console.log("BODY:", req.body);
-    console.log("FILE:", req.file);
-
     return res.status(200).json(updatedService);
   } catch (error) {
     console.error("Error updating service:", error);
@@ -206,7 +210,7 @@ exports.updateServiceById = async (req, res) => {
   }
 };
 
-
+// 6. Purge Service Entry Instance
 exports.deleteServiceById = async (req, res) => {
   try {
     const result = await Service.deleteOne({ _id: req.params.id }).exec();
