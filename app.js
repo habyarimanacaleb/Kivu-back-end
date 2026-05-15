@@ -31,7 +31,7 @@ app.use(session({
     secure: NODE_ENV === 'production',
     httpOnly: true,
     sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000 // 1 day
+    maxAge: 24 * 60 * 60 * 1000 
   }
 }));
 
@@ -41,7 +41,7 @@ app.use(cors({
     'http://localhost:5173',
     'https://ibirwa-kivu-bike-tours.netlify.app'
   ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS','PATCH'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
