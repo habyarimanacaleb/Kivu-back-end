@@ -1,12 +1,22 @@
 const express = require("express");
 const serviceController = require("../controllers/serviceController");
 const upload = require("../middleware/upload");
+const verifyAdmin = require("../middleware/adminAuth");
 const router = express.Router();
-router.post("/" , upload.single("imageFile") , serviceController.createService);
+
+const serviceUploadFields = upload.fields([
+  { name: "imageFile", maxCount: 1 },
+  { name: "gallery", maxCount: 5 }
+]);
+
+// Publicly viewable
 router.get("/", serviceController.getAllServices);
 router.get('/images', serviceController.getServiceImages);
 router.get("/:id", serviceController.getServiceById);
-router.put("/:id", upload.single("imageFile") , serviceController.updateServiceById);
-router.delete("/:id", serviceController.deleteServiceById);
+
+// Secured Administrative Control Gates
+router.post("/", verifyAdmin, serviceUploadFields, serviceController.createService);
+router.put("/:id", verifyAdmin, serviceUploadFields, serviceController.updateServiceById);
+router.delete("/:id", verifyAdmin, serviceController.deleteServiceById);
 
 module.exports = router;

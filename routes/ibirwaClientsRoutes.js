@@ -1,20 +1,27 @@
 const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/userController");
-const verifyUserRole = require("../middleware/verifyUserRole");
-const authMiddleware = require("../middleware/authMiddleware");
 
+// Middleware Imports
+const authMiddleware = require("../middleware/authMiddleware");
+const verifyUserRole = require("../middleware/verifyUserRole");
+
+// --- Public Authentication Pipelines ---
 router.post("/signup", userController.signup);
 router.post("/login", userController.login);
-router.post("/logout", userController.logout);
-router.put("/user/:id", userController.updateUserProfile);
-router.delete("/user/:id",authMiddleware, userController.deleteUser);
-router.patch("/user/:id/block", userController.blockOrUnblockUser);
-router.get("/users", userController.getAllUsers);
-router.get("/user/:id", userController.getUserById);
 router.get("/confirm-email/:token", userController.confirmEmail);
-router.get("/session", userController.getSessionData);
+
+// --- Authenticated User Operations (Requires valid token) ---
+router.post("/logout", authMiddleware, userController.logout);
+router.get("/session", authMiddleware, userController.getSessionData);
 router.get("/profile", authMiddleware, userController.getUserProfile);
-router.get("/restricted", verifyUserRole(["admin"]), userController.restricted);
+router.put("/user/:id", authMiddleware, userController.updateUserProfile); 
+router.delete("/user/:id", authMiddleware, userController.deleteUser);
+
+// --- Administrative Core Gates (Requires valid token AND admin role) ---
+router.get("/users", authMiddleware, verifyUserRole(["admin"]), userController.getAllUsers);
+router.get("/user/:id", authMiddleware, verifyUserRole(["admin"]), userController.getUserById);
+router.patch("/user/:id/block", authMiddleware, verifyUserRole(["admin"]), userController.blockOrUnblockUser);
+router.get("/restricted", authMiddleware, verifyUserRole(["admin"]), userController.restricted);
 
 module.exports = router;
