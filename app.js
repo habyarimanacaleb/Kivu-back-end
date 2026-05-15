@@ -84,7 +84,7 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
   try {
     await connectDB();
-    const server = app.listen(PORT, () => {
+    const server = app.listen(PORT,'0.0.0.0', () => {
       logger.info(`Server running in ${NODE_ENV} mode on port ${PORT}`);
       console.log('\n-----------------------------------------------');
       console.log(`🚀 Server running in ${NODE_ENV} mode at http://localhost:${PORT} `);
