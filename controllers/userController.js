@@ -92,7 +92,6 @@ exports.login = async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required." });
     }
-
     // Fetch user and explicitly request the hidden password string field
     const user = await User.findOne({ email }).select("+password");
     if (!user) return res.status(401).json({ message: "Invalid credentials" });
@@ -108,7 +107,7 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: "Incorrect Password" });
 
-    // Synchronization Fix: Generate matching boolean flags for your verifyAdmin middleware check
+    // Generate matching boolean flags for your verifyAdmin middleware check
     const isAdminUser = user.role === "admin";
 
     const token = jwt.sign(
@@ -126,17 +125,27 @@ exports.login = async (req, res) => {
       req.session.user = { userId: user._id, role: user.role, username: user.username, token };
     }
 
+    // 🌟 FIX: Store the actual JWT token in a secure, httpOnly cookie
+    res.cookie("token", token, {
+      httpOnly: true, // Prevents client-side JS extraction (XSS protection)
+      secure: process.env.NODE_ENV === "production", // true on Render (HTTPS), false on Localhost
+      maxAge: 2 * 60 * 60 * 1000, // 2 hours (matches your JWT expiration)
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax" // 'none' handles cross-domain cookies for Vercel -> Render mapping
+    });
+
+    // Optional user preferences cookie can remain or be modified
     res.cookie(
       "userPreferences",
       JSON.stringify({ theme: "dark", language: "en" }),
       {
-        httpOnly: true,
+        httpOnly: false, // Accessible by frontend if needed
         secure: process.env.NODE_ENV === "production",
         maxAge: 24 * 60 * 60 * 1000,
         sameSite: "lax"
       }
     );
 
+    // Return the user data structure. (Note: We still include token here for layout fallbacks)
     res.status(200).json({ 
       message: "User logged in successfully", 
       user: { id: user._id, email: user.email, username: user.username, role: user.role }, 
