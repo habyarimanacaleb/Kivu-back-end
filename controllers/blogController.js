@@ -113,16 +113,34 @@ exports.getBlogBySlug = async(req,res)=>{
     }
 }
 
-// 4. Update Existing Record Properties
+// 4. Update Existing Record Properties Safely
 exports.updateBlog = async (req, res) => {
   try {
-    const updates = { ...req.body };
+    const { title, category, excerpt, content, author, tags, gallery } = req.body;
     
+    // Create an explicit update block instead of spreading req.body blindly
+    const updates = {};
+    if (title) {
+      updates.title = title;
+      // Re-generate matching slug cleanly if title changes
+      updates.slug = title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    }
+    if (category) updates.category = category;
+    if (excerpt) updates.excerpt = excerpt;
+    if (content) updates.content = content;
+    if (author) updates.author = author;
+    
+    // Handle tags safely
+    if (tags) {
+      updates.tags = Array.isArray(tags) ? tags : [tags];
+    }
+
+    // Process file uploads if new media buffers are passed via Multer
     if (req.files) {
       if (req.files['mainImage']?.[0]) {
         updates.mainImage = await uploadBufferToCloud(req.files['mainImage'][0].buffer);
       }
-      if (req.files['gallery']) {
+      if (req.files['gallery'] && req.files['gallery'].length > 0) {
         const structuralGallery = [];
         for (const file of req.files['gallery']) {
           const url = await uploadBufferToCloud(file.buffer);
@@ -132,12 +150,25 @@ exports.updateBlog = async (req, res) => {
       }
     }
 
-    const updatedBlog = await Blog.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
-    if (!updatedBlog) return res.status(404).json({ message: "Target document footprint not discovered." });
+    // Retain old gallery entries if no new ones were uploaded but text fields were updated
+    if (!updates.gallery && gallery) {
+      updates.gallery = Array.isArray(gallery) ? gallery : [gallery];
+    }
+
+    const updatedBlog = await Blog.findByIdAndUpdate(
+      req.params.id, 
+      { $set: updates }, // Use explicit mongo atomic set operator 
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedBlog) {
+      return res.status(404).json({ message: "Target document footprint not discovered." });
+    }
     
     res.status(200).json(updatedBlog);
   } catch (error) {
-    res.status(400).json({ message: "Modification cycle error.", error: error.message });
+    console.error("Internal Blog Update Failure Log:", error);
+    res.status(500).json({ message: "Modification cycle error.", error: error.message });
   }
 };
 
