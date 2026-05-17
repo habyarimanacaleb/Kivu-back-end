@@ -116,7 +116,7 @@ exports.getBlogBySlug = async(req,res)=>{
 // 4. Update Existing Record Properties Safely
 exports.updateBlog = async (req, res) => {
   try {
-    const { title, category, excerpt, content, author, tags, gallery } = req.body;
+    const { title, category, excerpt, content, author, tags, existingGallery } = req.body;
     
     // Create an explicit update block instead of spreading req.body blindly
     const updates = {};
@@ -130,9 +130,28 @@ exports.updateBlog = async (req, res) => {
     if (content) updates.content = content;
     if (author) updates.author = author;
     
-    // Handle tags safely
+    // 🌟 FIX 1: Safely parse tags back into a clean Array structure
     if (tags) {
-      updates.tags = Array.isArray(tags) ? tags : [tags];
+      try {
+        // If it's a stringified JSON array from FormData, parse it
+        const parsedTags = typeof tags === 'string' ? JSON.parse(tags) : tags;
+        updates.tags = Array.isArray(parsedTags) ? parsedTags : [parsedTags];
+      } catch (e) {
+        // Fallback fallback if parsing hits a rogue comma string instead of array
+        updates.tags = typeof tags === 'string' ? tags.split(',').map(t => t.trim()) : [tags];
+      }
+    }
+
+    // Initialize gallery tracking array
+    let finalGallery = [];
+
+    // 🌟 FIX 2: Recover remaining cloud-hosted URLs sent from frontend state
+    if (existingGallery) {
+      try {
+        finalGallery = typeof existingGallery === 'string' ? JSON.parse(existingGallery) : existingGallery;
+      } catch (e) {
+        finalGallery = Array.isArray(existingGallery) ? existingGallery : [existingGallery];
+      }
     }
 
     // Process file uploads if new media buffers are passed via Multer
@@ -140,19 +159,19 @@ exports.updateBlog = async (req, res) => {
       if (req.files['mainImage']?.[0]) {
         updates.mainImage = await uploadBufferToCloud(req.files['mainImage'][0].buffer);
       }
+      
+      // 🌟 FIX 3: Append newly uploaded image streams right on top of retained live images
       if (req.files['gallery'] && req.files['gallery'].length > 0) {
-        const structuralGallery = [];
         for (const file of req.files['gallery']) {
           const url = await uploadBufferToCloud(file.buffer);
-          structuralGallery.push(url);
+          finalGallery.push(url);
         }
-        updates.gallery = structuralGallery;
       }
     }
 
-    // Retain old gallery entries if no new ones were uploaded but text fields were updated
-    if (!updates.gallery && gallery) {
-      updates.gallery = Array.isArray(gallery) ? gallery : [gallery];
+    // Set combined gallery to update pipeline (only if user provided or uploaded gallery assets)
+    if (existingGallery || (req.files && req.files['gallery'])) {
+      updates.gallery = finalGallery;
     }
 
     const updatedBlog = await Blog.findByIdAndUpdate(
