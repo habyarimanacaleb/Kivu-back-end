@@ -66,3 +66,36 @@ exports.respondToContact = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+exports.deleteContact = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const contact = await Contact.findByIdAndDelete(id);
+    
+    if (!contact) {
+      return res.status(404).json({ message: "Contact record not found" });
+    }
+
+    res.status(200).json({ 
+      message: "Contact message deleted successfully from database log.",
+      deletedId: id 
+    });
+  } catch (error) {
+    console.error("Error deleting contact record:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.deleteAllContacts = async (req, res) => {
+  try {
+    const result = await Contact.deleteMany({});
+    
+    res.status(200).json({ 
+      message: `Successfully flushed all contact messages. Removed ${result.deletedCount} records.` 
+    });
+  } catch (error) {
+    console.error("Error flashing contact collection database:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
