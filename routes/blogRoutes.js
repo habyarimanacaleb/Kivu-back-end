@@ -11,12 +11,14 @@ const blogUploadFields = upload.fields([
 
 // 100% Free Public Interactions (No signup barrier)
 router.get("/", blogController.getAllBlogs);
-router.get("/:id", blogController.getBlogById);
-router.get("/:slug", blogController.getBlogBySlug);
+router.get("/:id", blogController.getBlogById);          
+router.get("/slug/:slug", blogController.getBlogBySlug);
+
+// --- INTERACTIVE ANONYMOUS TRIPS ---
 router.post("/:id/comments", blogController.addAnonymousComment);
 router.post("/:id/toggle-like", blogController.toggleBlogLike);
 
-// Protected Dashboard Points (Requires Admin Login Header)
+// --- PROTECTED DASHBOARD MANAGEMENT GATEWAY ---
 router.post("/", verifyAdmin, blogUploadFields, blogController.createBlog);
 router.put("/:id", verifyAdmin, blogUploadFields, blogController.updateBlog);
 router.delete("/:id", verifyAdmin, blogController.deleteBlog);
