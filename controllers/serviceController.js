@@ -3,6 +3,16 @@ const { sendEmail } = require("../controllers/emailController");
 const uploadToCloudinary = require("../utils/cloudinaryUpload");
 const cloudinary = require("cloudinary").v2;
 
+// Helper to extract Cloudinary Public ID from a secure URL for cleanup operations
+const extractPublicId = (url) => {
+  if (!url) return null;
+  const parts = url.split('/');
+  const fileName = parts[parts.length - 1];
+  const [id] = fileName.split('.');
+  // If your files upload into a specific folder, handle it here (e.g., `services/${id}`)
+  return id;
+};
+
 // 1. Create a New Service with Grid Gallery Elements
 exports.createService = async (req, res) => {
   try {
@@ -140,7 +150,7 @@ exports.getServiceById = async (req, res) => {
     const { id } = req.params;
 
     const service = await Service.findById(id)
-      .select("title description detailPage details imageFile gallery") // Explicit gallery validation link
+      .select("title description detailPage details imageFile gallery") 
       .lean();
 
     if (!service) {
@@ -154,7 +164,7 @@ exports.getServiceById = async (req, res) => {
   }
 };
 
-// 5. Mutate Existing Service Object Fields
+// 5. Mutate Existing Service Object Fields Safely
 exports.updateServiceById = async (req, res) => {
   try {
     const updateData = {};
@@ -174,17 +184,33 @@ exports.updateServiceById = async (req, res) => {
       updateData.imageFile = result.secure_url;
     }
 
-    // Process replacement or addition sets into the target grid layout
+    // 🌟 FIX 1: Safely reconstruct the gallery without losing existing entries
+    let finalGallery = [];
+    
+    // Parse retained images sent back from frontend state
+    if (req.body.existingGallery) {
+      try {
+        finalGallery = typeof req.body.existingGallery === "string" 
+          ? JSON.parse(req.body.existingGallery) 
+          : req.body.existingGallery;
+      } catch (e) {
+        finalGallery = Array.isArray(req.body.existingGallery) ? req.body.existingGallery : [req.body.existingGallery];
+      }
+    }
+
+    // Append newly uploaded file buffers on top of preserved assets
     if (req.files && req.files['gallery']) {
-      const updatedGalleryUrls = [];
       const galleryFiles = Array.isArray(req.files['gallery']) ? req.files['gallery'] : [req.files['gallery']];
       
       for (const file of galleryFiles) {
         const result = await uploadToCloudinary(file.buffer);
-        updatedGalleryUrls.push(result.secure_url);
+        finalGallery.push(result.secure_url);
       }
-      
-      updateData.gallery = updatedGalleryUrls;
+    }
+
+    // Only assign to update payload if either fresh files came in OR old files were altered
+    if (req.body.existingGallery || (req.files && req.files['gallery'])) {
+      updateData.gallery = finalGallery;
     }
 
     if (Object.keys(updateData).length === 0) {
@@ -210,16 +236,31 @@ exports.updateServiceById = async (req, res) => {
   }
 };
 
-// 6. Purge Service Entry Instance
+// 6. Purge Service Entry Instance and its Assets from Cloudinary
 exports.deleteServiceById = async (req, res) => {
   try {
-    const result = await Service.deleteOne({ _id: req.params.id }).exec();
-
-    if (result.deletedCount === 0) {
+    // 🌟 FIX 2: Find document first to read hosted URLs before deleting
+    const service = await Service.findById(req.params.id).lean();
+    if (!service) {
       return res.status(404).json({ message: "Service not found" });
     }
 
-    return res.status(200).json({ message: "Service deleted successfully" });
+    // Purge Hero Cover out of Cloudinary bucket
+    if (service.imageFile) {
+      const publicId = extractPublicId(service.imageFile);
+      if (publicId) await cloudinary.uploader.destroy(publicId).catch(err => console.error("Cloudinary wipe failed:", err));
+    }
+
+    // Loop and clean up complete gallery layout matrix array
+    if (service.gallery && service.gallery.length > 0) {
+      for (const url of service.gallery) {
+        const publicId = extractPublicId(url);
+        if (publicId) await cloudinary.uploader.destroy(publicId).catch(err => console.error("Cloudinary gallery item wipe failed:", err));
+      }
+    }
+
+    await Service.deleteOne({ _id: req.params.id }).exec();
+    return res.status(200).json({ message: "Service and associated media assets cleared successfully" });
   } catch (error) {
     console.error("Error deleting service:", error);
     return res.status(500).json({ message: "Internal server error" });

@@ -1,1 +1,12 @@
 2025-04-15T01:16:45.571Z [error]: Unhandled Rejection: ReferenceError: mongoose is not defined
+2026-05-17T02:46:18.951Z [error]: Error: SyntaxError: Expected ',' or '}' after property value in JSON at position 99 (line 5 column 1)
+    at JSON.parse (<anonymous>)
+    at parse (E:\Kivu-back-end\node_modules\body-parser\lib\types\json.js:92:19)
+    at E:\Kivu-back-end\node_modules\body-parser\lib\read.js:128:18
+    at AsyncResource.runInAsyncScope (node:async_hooks:211:14)
+    at invokeCallback (E:\Kivu-back-end\node_modules\raw-body\index.js:238:16)
+    at done (E:\Kivu-back-end\node_modules\raw-body\index.js:227:7)
+    at IncomingMessage.onEnd (E:\Kivu-back-end\node_modules\raw-body\index.js:287:7)
+    at IncomingMessage.emit (node:events:518:28)
+    at endReadableNT (node:internal/streams/readable:1698:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
