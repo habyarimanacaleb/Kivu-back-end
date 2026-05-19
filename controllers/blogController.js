@@ -1,14 +1,12 @@
 const Blog = require("../models/blog");
 const cloudinary = require("cloudinary").v2;
 
-// Cloudinary Configuration Matrix
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Helper stream processor handling RAM data storage buffers
 const uploadBufferToCloud = (fileBuffer) => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
@@ -22,7 +20,6 @@ const uploadBufferToCloud = (fileBuffer) => {
   });
 };
 
-// 1. Fetch All Sorted Logs
 exports.getAllBlogs = async (req, res) => {
   try {
     const blogs = await Blog.find().sort({ createdAt: -1 });
@@ -32,7 +29,6 @@ exports.getAllBlogs = async (req, res) => {
   }
 };
 
-// 2. Fetch Single Target Document
 exports.getBlogById = async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
@@ -43,7 +39,6 @@ exports.getBlogById = async (req, res) => {
   }
 };
 
-// 3. Process & Generate New Log Record
 exports.createBlog = async (req, res) => {
 
    
@@ -101,8 +96,6 @@ exports.createBlog = async (req, res) => {
   }
 };
 
-// get blog post by slug with populated tour data
-
 exports.getBlogBySlug = async(req,res)=>{
     try {
         const blog = await Blog.findOne({ slug: req.params.slug }).populate('toursNearby');
@@ -133,11 +126,9 @@ exports.updateBlog = async (req, res) => {
     // 🌟 FIX 1: Safely parse tags back into a clean Array structure
     if (tags) {
       try {
-        // If it's a stringified JSON array from FormData, parse it
         const parsedTags = typeof tags === 'string' ? JSON.parse(tags) : tags;
         updates.tags = Array.isArray(parsedTags) ? parsedTags : [parsedTags];
       } catch (e) {
-        // Fallback fallback if parsing hits a rogue comma string instead of array
         updates.tags = typeof tags === 'string' ? tags.split(',').map(t => t.trim()) : [tags];
       }
     }
@@ -145,7 +136,6 @@ exports.updateBlog = async (req, res) => {
     // Initialize gallery tracking array
     let finalGallery = [];
 
-    // 🌟 FIX 2: Recover remaining cloud-hosted URLs sent from frontend state
     if (existingGallery) {
       try {
         finalGallery = typeof existingGallery === 'string' ? JSON.parse(existingGallery) : existingGallery;
@@ -153,14 +143,11 @@ exports.updateBlog = async (req, res) => {
         finalGallery = Array.isArray(existingGallery) ? existingGallery : [existingGallery];
       }
     }
-
-    // Process file uploads if new media buffers are passed via Multer
     if (req.files) {
       if (req.files['mainImage']?.[0]) {
         updates.mainImage = await uploadBufferToCloud(req.files['mainImage'][0].buffer);
       }
       
-      // 🌟 FIX 3: Append newly uploaded image streams right on top of retained live images
       if (req.files['gallery'] && req.files['gallery'].length > 0) {
         for (const file of req.files['gallery']) {
           const url = await uploadBufferToCloud(file.buffer);
@@ -169,7 +156,6 @@ exports.updateBlog = async (req, res) => {
       }
     }
 
-    // Set combined gallery to update pipeline (only if user provided or uploaded gallery assets)
     if (existingGallery || (req.files && req.files['gallery'])) {
       updates.gallery = finalGallery;
     }

@@ -8,6 +8,8 @@ const path = require('path');
 const cors = require('cors');
 const session = require('express-session');
 const compression = require('compression');
+const http = require('http');                    // 👉 Imported native HTTP module
+const { Server } = require('socket.io');         // 👉 Imported Socket.io engine
 const connectDB = require('./config/db');
 const logger = require('./utils/logger'); // Optional
 
@@ -15,6 +17,33 @@ const logger = require('./utils/logger'); // Optional
 const app = express();
 const PORT = process.env.PORT || 5000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
+
+// 👉 Create Native HTTP Server wrapped around the Express app layout instance
+const server = http.createServer(app);
+
+// 👉 Initialize Socket.io cluster bound to your new HTTP server chassis
+const io = new Server(server, {
+  cors: {
+    origin: [
+      'http://localhost:5173',
+      'https://ibirwa-kivu-bike-tours.netlify.app'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    credentials: true
+  }
+});
+
+// 👉 Attach your Live Socket Server instance straight onto the app framework instance
+app.set("socketio", io);
+
+// Basic socket authentication/connection confirmation monitoring log
+io.on("connection", (socket) => {
+  logger.info(`Terminal client pipeline linked to socket tunnel: ${socket.id}`);
+  
+  socket.on("disconnect", () => {
+    logger.info(`Terminal client connection unlinked: ${socket.id}`);
+  });
+});
 
 
 // ================= MIDDLEWARE =================
@@ -57,6 +86,7 @@ app.set('views', path.join(__dirname, 'views'));
 // ================= ROUTES =================
 app.use('/api/gallery', require('./routes/galleryRoutes'));
 app.use('/api/ibirwa-clients', require('./routes/ibirwaClientsRoutes'));
+app.use("/api/ibirwa-clients/admin", require('./routes/governanceRoutes')); // Connected securely!
 app.use('/api', require('./routes/contactRoutes'));
 app.use('/api/services', require('./routes/ServiceRoutes'));
 app.use('/api/inquiries', require('./routes/tourInquiry.routes'));
@@ -84,10 +114,12 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
   try {
     await connectDB();
-    const server = app.listen(PORT,'0.0.0.0', () => {
+    
+    // 👉 Updated execution loop to trigger our HTTP socket wrapper instead of raw app listener
+    server.listen(PORT, '0.0.0.0', () => {
       logger.info(`Server running in ${NODE_ENV} mode on port ${PORT}`);
       console.log('\n-----------------------------------------------');
-      console.log(`🚀 Server running in ${NODE_ENV} mode at http://localhost:${PORT} `);
+      console.log(`🚀 Real-Time Server running in ${NODE_ENV} mode at http://localhost:${PORT} `);
       console.log('-----------------------------------------------\n');
     });
 
