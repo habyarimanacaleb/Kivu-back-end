@@ -20,6 +20,21 @@ const uploadBufferToCloud = (fileBuffer) => {
   });
 };
 
+// Helper function to extract tags perfectly regardless of parsing strategy
+const normalizeTags = (body) => {
+  const rawTags = body.tags || body["tags[]"];
+  if (!rawTags) return [];
+  if (Array.isArray(rawTags)) return rawTags;
+  if (typeof rawTags === "string") {
+    // If it comes through as stringified JSON or a comma-separated line fallback
+    if (rawTags.startsWith("[") && rawTags.endsWith("]")) {
+      try { return JSON.parse(rawTags); } catch (e) { /* fall through */ }
+    }
+    return rawTags.split(",").map(t => t.trim()).filter(t => t !== "");
+  }
+  return [rawTags];
+};
+
 exports.getAllBlogs = async (req, res) => {
   try {
     const blogs = await Blog.find().sort({ createdAt: -1 });
@@ -39,19 +54,27 @@ exports.getBlogById = async (req, res) => {
   }
 };
 
+// 1. Create a Brand New Blog Link Instance
 exports.createBlog = async (req, res) => {
-
-   
-
   try {
     const { title, category, excerpt, content, author } = req.body;
-   
+    
+    // Double-check title uniqueness
+    const existingBlog = await Blog.findOne({ title: title.trim() });
+    if (existingBlog) {
+      return res.status(400).json({ message: "A blog post with this title already exists. Please choose a more unique title." });
+    }
+
     const sluggen = title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     const slug = sluggen.length > 100 ? sluggen.substring(0, 100) : sluggen;
+    
     const existingSlug = await Blog.findOne({ slug });
-    if (existingSlug) return res.status(400).json({ message: "A blog post with a similar title already exists. Please modify the title to be more unique." });
+    if (existingSlug) {
+      return res.status(400).json({ message: "A URL path routing slug with a similar signature already exists." });
+    }
 
-    const tags = req.body.tags ? (Array.isArray(req.body.tags) ? req.body.tags : [req.body.tags]) : [];
+    // 🌟 Normalize Tags cleanly from both "tags" or "tags[]" fields
+    const tags = normalizeTags(req.body);
 
     let mainImageUrl = req.body.mainImage; 
     let galleryUrls = [];
@@ -72,16 +95,11 @@ exports.createBlog = async (req, res) => {
       galleryUrls = Array.isArray(req.body.gallery) ? req.body.gallery : [req.body.gallery];
     }
 
-    // blog exists check
-    const existingBlog = await Blog.findOne({ title: title.trim() });
-    if (existingBlog) return res.status(400).json({ message: "A blog post with this title already exists. Please choose a different title." });
-
-
     const newBlog = new Blog({
-      title,
-        slug,
-        author,
-        tags,
+      title: title.trim(),
+      slug,
+      author,
+      tags,
       category,
       excerpt,
       content,
@@ -96,46 +114,47 @@ exports.createBlog = async (req, res) => {
   }
 };
 
-exports.getBlogBySlug = async(req,res)=>{
-    try {
-        const blog = await Blog.findOne({ slug: req.params.slug }).populate('toursNearby');
-        if (!blog) return res.status(404).json({ message: "Blog post not found." });
-        res.status(200).json(blog);
-    } catch (error) {
-        res.status(500).json({ message: "Error fetching blog post.", error: error.message });
-    }
-}
+exports.getBlogBySlug = async (req, res) => {
+  try {
+    const blog = await Blog.findOne({ slug: req.params.slug }).populate('toursNearby');
+    if (!blog) return res.status(404).json({ message: "Blog post not found." });
+    res.status(200).json(blog);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching blog post.", error: error.message });
+  }
+};
 
-// 4. Update Existing Record Properties Safely
+// 2. Update Existing Record Properties Safely
 exports.updateBlog = async (req, res) => {
   try {
-    const { title, category, excerpt, content, author, tags, existingGallery } = req.body;
+    const { title, category, excerpt, content, author, existingGallery } = req.body;
     
-    // Create an explicit update block instead of spreading req.body blindly
     const updates = {};
     if (title) {
-      updates.title = title;
-      // Re-generate matching slug cleanly if title changes
-      updates.slug = title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      updates.title = title.trim();
+      const sluggen = title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      const slug = sluggen.length > 100 ? sluggen.substring(0, 100) : sluggen;
+      
+      // 🌟 Security Check: Make sure slug doesn't collide with another record
+      const duplicateSlug = await Blog.findOne({ slug, _id: { $ne: req.params.id } });
+      if (duplicateSlug) {
+        return res.status(400).json({ message: "Another record is already using this updated title routing pathway." });
+      }
+      updates.slug = slug;
     }
+    
     if (category) updates.category = category;
     if (excerpt) updates.excerpt = excerpt;
     if (content) updates.content = content;
     if (author) updates.author = author;
     
-    // 🌟 FIX 1: Safely parse tags back into a clean Array structure
-    if (tags) {
-      try {
-        const parsedTags = typeof tags === 'string' ? JSON.parse(tags) : tags;
-        updates.tags = Array.isArray(parsedTags) ? parsedTags : [parsedTags];
-      } catch (e) {
-        updates.tags = typeof tags === 'string' ? tags.split(',').map(t => t.trim()) : [tags];
-      }
+    // 🌟 Normalize Tags cleanly on mutations
+    if (req.body.tags || req.body["tags[]"]) {
+      updates.tags = normalizeTags(req.body);
     }
 
-    // Initialize gallery tracking array
+    // Initialize gallery arrays
     let finalGallery = [];
-
     if (existingGallery) {
       try {
         finalGallery = typeof existingGallery === 'string' ? JSON.parse(existingGallery) : existingGallery;
@@ -143,6 +162,7 @@ exports.updateBlog = async (req, res) => {
         finalGallery = Array.isArray(existingGallery) ? existingGallery : [existingGallery];
       }
     }
+
     if (req.files) {
       if (req.files['mainImage']?.[0]) {
         updates.mainImage = await uploadBufferToCloud(req.files['mainImage'][0].buffer);
@@ -156,13 +176,14 @@ exports.updateBlog = async (req, res) => {
       }
     }
 
+    // If modifications were requested on the photo structure layouts
     if (existingGallery || (req.files && req.files['gallery'])) {
       updates.gallery = finalGallery;
     }
 
     const updatedBlog = await Blog.findByIdAndUpdate(
       req.params.id, 
-      { $set: updates }, // Use explicit mongo atomic set operator 
+      { $set: updates }, 
       { new: true, runValidators: true }
     );
 
@@ -177,7 +198,6 @@ exports.updateBlog = async (req, res) => {
   }
 };
 
-// 5. Delete Log Instance
 exports.deleteBlog = async (req, res) => {
   try {
     const deletedBlog = await Blog.findByIdAndDelete(req.params.id);
@@ -188,7 +208,6 @@ exports.deleteBlog = async (req, res) => {
   }
 };
 
-// 6. Flexible Open Comment Ingestion Endpoint
 exports.addAnonymousComment = async (req, res) => {
   try {
     const { text, clientNickname } = req.body;
@@ -197,7 +216,6 @@ exports.addAnonymousComment = async (req, res) => {
     const targetBlog = await Blog.findById(req.params.id);
     if (!targetBlog) return res.status(404).json({ message: "Blog parameter invalid." });
 
-    // Fall back to structured name tag if no text nickname is provided
     const userTag = clientNickname && clientNickname.trim() ? clientNickname.trim() : "Anonymous Explorer";
 
     targetBlog.comments.push({ 
@@ -212,7 +230,6 @@ exports.addAnonymousComment = async (req, res) => {
   }
 };
 
-// 7. Open Like/Unlike Toggle (Using Device/Browser Fingerprint tracking)
 exports.toggleBlogLike = async (req, res) => {
   try {
     const { clientId } = req.body;
@@ -224,10 +241,8 @@ exports.toggleBlogLike = async (req, res) => {
     const hasLiked = blog.likes.includes(clientId);
 
     if (hasLiked) {
-      // Unlike state execution
       blog.likes = blog.likes.filter(id => id !== clientId);
     } else {
-      // Like state execution
       blog.likes.push(clientId);
     }
 
