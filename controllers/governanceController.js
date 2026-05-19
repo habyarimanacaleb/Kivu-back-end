@@ -1,5 +1,5 @@
-import Governance from "../models/Governance.js";
-import User from "../models/User.js"; // Assuming your User schema file path
+const Governance = require("../models/Governance");
+const User = require("../models/userModel");
 
 // Helper to get or initialize the singular global governance settings doc
 const getOrCreateSettings = async () => {
@@ -12,8 +12,8 @@ const getOrCreateSettings = async () => {
   return settings;
 };
 
-// 📡 POST: Dispatch Bulk System Notification
-export const broadcastMessage = async (req, res) => {
+// 📡 POST: Dispatch Bulk System Notification with Real-Time Sockets
+exports.broadcastMessage = async (req, res) => {
   try {
     const { title, text, scope } = req.body;
     
@@ -23,29 +23,62 @@ export const broadcastMessage = async (req, res) => {
 
     const settings = await getOrCreateSettings();
     
-    // Log the event record in the database
+    // Deactivate previous alerts so only the newest broadcast flags as active
+    settings.broadcastLogs.forEach((log) => {
+      log.isActiveAlert = false;
+    });
+
+    // Log the new event record with the active status flag enabled
     settings.broadcastLogs.push({
       title,
       text,
       scope,
-      dispatchedBy: req.user?._id // Extracted from auth middleware
+      isActiveAlert: true,
+      dispatchedBy: req.user?._id // Extracted securely from your auth token middleware
     });
     
     await settings.save();
 
-    /* Note: Here you can plug in real dispatch drivers!
-      e.g., await sendMassEmails(scope, title, text); 
-      or sendSocketNotification(scope, { title, text });
-    */
+    // 👉 LIVE SOCKET TRANSMISSION INTERRUPT
+    // Extract the socket.io engine instance attached inside your server app configuration
+    const io = req.app.get("socketio");
+    if (io) {
+      io.emit("system_alert", {
+        title,
+        text,
+        scope,
+        createdAt: new Date()
+      });
+    }
 
-    res.status(200).json({ success: true, message: "System broadcast successfully dispatched." });
+    res.status(200).json({ 
+      success: true, 
+      message: "System broadcast successfully written to data registry and emitted live." 
+    });
   } catch (error) {
     res.status(500).json({ message: "Internal server error during dispatch context.", error: error.message });
   }
 };
 
+// 🟢 GET: Fetch Current Active System Alert (Public/Authenticated)
+exports.getActiveAlert = async (req, res) => {
+  try {
+    const settings = await Governance.findOne();
+    if (!settings) {
+      return res.status(200).json({ success: true, data: null });
+    }
+
+    // Find the log entry where isActiveAlert is true
+    const activeAlert = settings.broadcastLogs.find(log => log.isActiveAlert === true);
+
+    res.status(200).json({ success: true, data: activeAlert || null });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to retrieve active alert state.", error: error.message });
+  }
+};
+
 // 📝 PUT: Modify Platform Legal Policies
-export const updateLegalPolicies = async (req, res) => {
+exports.updateLegalPolicies = async (req, res) => {
   try {
     const { terms, privacy } = req.body;
     const settings = await getOrCreateSettings();
@@ -62,7 +95,7 @@ export const updateLegalPolicies = async (req, res) => {
 };
 
 // ⚡ POST: Execute Operational Infrastructure Checks
-export const handleSecurityAction = async (req, res) => {
+exports.handleSecurityAction = async (req, res) => {
   try {
     const { actionType } = req.params;
     const settings = await getOrCreateSettings();
@@ -81,7 +114,7 @@ export const handleSecurityAction = async (req, res) => {
       settings.securitySettings.lastCacheFlush = Date.now();
       await settings.save();
       
-      // Implement specific cache purge commands here (e.g., Redis clear, file unlink)
+      // Implement specific cache purge commands here (e.g., Redis clear, file unlinking loops)
       return res.status(200).json({ success: true, message: "Runtime memory buffer cleared successfully." });
     }
 

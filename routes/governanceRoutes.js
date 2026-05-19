@@ -1,21 +1,44 @@
-import express from "express";
-import { 
-  broadcastMessage, 
-  updateLegalPolicies, 
-  handleSecurityAction 
-} from "../controllers/governanceController.js";
-import { protect, isAdmin } from "../middleware/authMiddleware.js"; 
-// Note: Ensure your core protect/isAdmin validation handlers match your server configuration
-
+const express = require("express");
 const router = express.Router();
 
-// Apply authorization gate guards across all endpoint entries
-router.use(protect);
-router.use(isAdmin);
+// Controller Destructuring Imports
+const { 
+  broadcastMessage, 
+  updateLegalPolicies, 
+  handleSecurityAction, 
+  getActiveAlert
+} = require("../controllers/governanceController");
 
-// Mapping routes to controller operations
-router.post("/broadcast", broadcastMessage);
-router.put("/legal-policies", updateLegalPolicies);
-router.post("/security/:actionType", handleSecurityAction);
+// Authentication & Authorization Gate Middleware Imports
+const authMiddleware = require("../middleware/authMiddleware");
+const verifyUserRole = require("../middleware/verifyUserRole");
 
-export default router;
+// =========================================================================
+// ADMINISTRATIVE CORE GATES (Requires valid token session AND admin clearance)
+// =========================================================================
+router.get("/active-alert", authMiddleware, getActiveAlert);
+// 📡 Real-time global messaging pipeline execution endpoint
+router.post(
+  "/broadcast", 
+  authMiddleware, 
+  verifyUserRole(["admin"]), 
+  broadcastMessage
+);
+
+// 📝 Platform legal contract registry configuration update endpoint
+router.put(
+  "/legal-policies", 
+  authMiddleware, 
+  verifyUserRole(["admin"]), 
+  updateLegalPolicies
+);
+
+// ⚡ Operational security scripts and log flushing execution gateway
+router.post(
+  "/security/:actionType", 
+  authMiddleware, 
+  verifyUserRole(["admin"]), 
+  handleSecurityAction
+);
+
+module.exports = router;
