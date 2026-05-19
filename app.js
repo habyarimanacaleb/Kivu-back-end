@@ -57,6 +57,7 @@ app.set('views', path.join(__dirname, 'views'));
 // ================= ROUTES =================
 app.use('/api/gallery', require('./routes/galleryRoutes'));
 app.use('/api/ibirwa-clients', require('./routes/ibirwaClientsRoutes'));
+app.use("/api/ibirwa-clients/admin", require('./routes/governanceRoutes'));
 app.use('/api', require('./routes/contactRoutes'));
 app.use('/api/services', require('./routes/ServiceRoutes'));
 app.use('/api/inquiries', require('./routes/tourInquiry.routes'));
