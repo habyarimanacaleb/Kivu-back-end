@@ -3,20 +3,20 @@ const nodemailer = require("nodemailer");
 require("dotenv").config();
 
 const transporter = nodemailer.createTransport({
-  service: "gmail", 
+  service: "gmail",
   auth: {
-    user: process.env.ADMIN_EMAIL, 
-    pass: process.env.ADMIN_EMAIL_PASSWORD, 
+    user: process.env.ADMIN_EMAIL,
+    pass: process.env.ADMIN_EMAIL_PASSWORD,
   },
   tls: {
-    rejectUnauthorized: false, 
+    rejectUnauthorized: false,
   },
 });
 
 const sendEmailNotification = async (inquiry) => {
   const mailOptions = {
     from: inquiry.email,
-    to: process.env.ADMIN_EMAIL, 
+    to: process.env.ADMIN_EMAIL,
     subject: "New Tour Inquiry Received",
     text: `
       A new tour inquiry has been submitted:
@@ -44,6 +44,9 @@ const sendEmailNotification = async (inquiry) => {
 exports.createInquiry = async (req, res) => {
   try {
     const newInquiry = new TourInquiry(req.body);
+    const io = req.app.get("socketio");
+    io.emit("newInquiry", newInquiry);
+    
     await newInquiry.save();
 
     // Send admin an email
@@ -84,7 +87,7 @@ exports.updateInquiry = async (req, res) => {
     const updatedInquiry = await TourInquiry.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true }
+      { new: true },
     );
     if (!updatedInquiry)
       return res.status(404).json({ message: "Inquiry not found" });

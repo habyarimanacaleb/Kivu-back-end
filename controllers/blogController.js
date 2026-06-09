@@ -53,7 +53,15 @@ exports.getBlogById = async (req, res) => {
     res.status(500).json({ message: "Query processing error.", error: error.message });
   }
 };
-
+exports.getBlogBySlug = async (req, res) => {
+  try {
+    const blog = await Blog.findOne({ slug: req.params.slug }).populate('toursNearby');
+    if (!blog) return res.status(404).json({ message: "Blog post not found." });
+    res.status(200).json(blog);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching blog post.", error: error.message });
+  }
+};
 // 1. Create a Brand New Blog Link Instance
 exports.createBlog = async (req, res) => {
   try {
@@ -111,16 +119,6 @@ exports.createBlog = async (req, res) => {
     res.status(201).json(savedBlog);
   } catch (error) {
     res.status(400).json({ message: "Payload commit abort.", error: error.message });
-  }
-};
-
-exports.getBlogBySlug = async (req, res) => {
-  try {
-    const blog = await Blog.findOne({ slug: req.params.slug }).populate('toursNearby');
-    if (!blog) return res.status(404).json({ message: "Blog post not found." });
-    res.status(200).json(blog);
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching blog post.", error: error.message });
   }
 };
 
