@@ -17,6 +17,10 @@ exports.createContact = async (req, res) => {
       email,
       message,
     });
+
+    const io = req.app.get('socketio');
+    io.emit('newContactMessage', newContact); // Emit the new contact message to all connected clients
+    
     await newContact.save();
 
     res.status(201).json({

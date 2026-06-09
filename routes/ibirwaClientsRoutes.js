@@ -1,14 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/userController");
+const {authLimiter} = require("../middleware/rateLimiter");
 
 // Middleware Imports
 const authMiddleware = require("../middleware/authMiddleware");
 const verifyUserRole = require("../middleware/verifyUserRole");
 
 // --- Public Authentication Pipelines ---
-router.post("/signup", userController.signup);
-router.post("/login", userController.login);
+router.post("/signup", authLimiter, userController.signup);
+router.post("/login", authLimiter, userController.login);
 router.get("/confirm-email/:token", userController.confirmEmail);
 
 // --- Authenticated User Operations (Requires valid token) ---

@@ -62,6 +62,10 @@ exports.createService = async (req, res) => {
       gallery: galleryUrls
     });
 
+    const io = req.app.get("socketio");
+    io.emit("newService", newService);
+
+    await newService.save();
     // Alert dispatch execution
     sendEmail(
       process.env.ADMIN_EMAIL || "admin@example.com",
@@ -78,7 +82,6 @@ exports.createService = async (req, res) => {
       `
     ).catch((err) => console.error("Email failed:", err));
 
-    console.log("Service created successfully:", newService);
     return res.status(201).json(newService);
   } catch (error) {
     console.error("Error creating service:", error);
@@ -169,14 +172,48 @@ exports.updateServiceById = async (req, res) => {
   try {
     const updateData = {};
 
+    // Map standard textual fields
     if (req.body.title) updateData.title = req.body.title;
     if (req.body.description) updateData.description = req.body.description;
     if (req.body.detailPage) updateData.detailPage = req.body.detailPage;
 
-    if (req.body.details) {
-      const parsedDetails = typeof req.body.details === "string" ? JSON.parse(req.body.details) : req.body.details;
-      updateData.details = parsedDetails;
+    // --- 🌟 FIXED: DYNAMIC PARSING FOR TIPS, HIGHLIGHTS, WHATSAPP, & EMAIL ---
+    let finalDetails = {};
+
+    // Fetch existing document to prevent overwriting missing fields
+    const currentService = await Service.findById(req.params.id).lean();
+    if (currentService && currentService.details) {
+      finalDetails = { ...currentService.details };
     }
+
+    // Scenario A: Frontend sent flat root values (e.g., formData.append('highlights', ...))
+    if (req.body.highlights) {
+      finalDetails.highlights = Array.isArray(req.body.highlights) 
+        ? req.body.highlights 
+        : JSON.parse(req.body.highlights);
+    }
+    if (req.body.tips) {
+      finalDetails.tips = Array.isArray(req.body.tips) 
+        ? req.body.tips 
+        : JSON.parse(req.body.tips);
+    }
+    if (req.body.whatsapp) finalDetails.whatsapp = req.body.whatsapp;
+    if (req.body.email) finalDetails.email = req.body.email;
+
+    // Scenario B: Frontend sent nested structured details stringified or as an object
+    if (req.body.details) {
+      const parsedDetails = typeof req.body.details === "string" 
+        ? JSON.parse(req.body.details) 
+        : req.body.details;
+      
+      finalDetails = { ...finalDetails, ...parsedDetails };
+    }
+
+    // Only commit onto the payload update parameters if fields exist
+    if (Object.keys(finalDetails).length > 0) {
+      updateData.details = finalDetails;
+    }
+    // -------------------------------------------------------------------------
 
     // Process modified structural cover image replacement strings
     if (req.files && req.files['imageFile']?.[0]) {
@@ -184,7 +221,7 @@ exports.updateServiceById = async (req, res) => {
       updateData.imageFile = result.secure_url;
     }
 
-    // 🌟 FIX 1: Safely reconstruct the gallery without losing existing entries
+    // Safely reconstruct the gallery without losing existing entries
     let finalGallery = [];
     
     // Parse retained images sent back from frontend state
@@ -196,6 +233,8 @@ exports.updateServiceById = async (req, res) => {
       } catch (e) {
         finalGallery = Array.isArray(req.body.existingGallery) ? req.body.existingGallery : [req.body.existingGallery];
       }
+    } else if (currentService && currentService.gallery) {
+      finalGallery = [...currentService.gallery];
     }
 
     // Append newly uploaded file buffers on top of preserved assets
