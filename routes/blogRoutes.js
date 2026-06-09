@@ -3,6 +3,7 @@ const router = express.Router();
 const upload = require("../middleware/upload"); 
 const blogController = require("../controllers/blogController");
 const verifyAdmin = require("../middleware/adminAuth");
+const resizeTourImage = require("../middleware/resizeImage");
 
 const blogUploadFields = upload.fields([
   { name: "mainImage", maxCount: 1 },
@@ -19,8 +20,8 @@ router.post("/:id/comments", blogController.addAnonymousComment);
 router.post("/:id/toggle-like", blogController.toggleBlogLike);
 
 // --- PROTECTED DASHBOARD MANAGEMENT GATEWAY ---
-router.post("/", verifyAdmin, blogUploadFields, blogController.createBlog);
-router.put("/:id", verifyAdmin, blogUploadFields, blogController.updateBlog);
+router.post("/", verifyAdmin, blogUploadFields,resizeTourImage, blogController.createBlog);
+router.put("/:id", verifyAdmin, blogUploadFields, resizeTourImage, blogController.updateBlog);
 router.delete("/:id", verifyAdmin, blogController.deleteBlog);
 
 module.exports = router;

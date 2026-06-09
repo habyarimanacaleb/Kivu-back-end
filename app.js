@@ -17,6 +17,7 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const compression = require('compression');
 const http = require('http');                    // 👉 Imported native HTTP module
 const { Server } = require('socket.io');         // 👉 Imported Socket.io engine
@@ -87,16 +88,24 @@ app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
-// Session middleware (only if needed)
+// Session middleware - Configured safely for production storage
 app.use(session({
   secret: process.env.SESSION_SECRET || 'default-secret',
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false, // Changed to false to avoid saving empty sessions
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI, // 🚀 Uses your existing MongoDB connection string!
+    collectionName: 'sessions',      // Creates a clean 'sessions' collection in MongoDB
+    ttl: 24 * 60 * 60,               // Session expiration (1 day in seconds)
+    crypto: {
+      secret: process.env.SESSION_SECRET || 'default-secret' // Encrypts session data
+    }
+  }),
   cookie: { 
     secure: NODE_ENV === 'production',
     httpOnly: true,
     sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000 
+    maxAge: 24 * 60 * 60 * 1000 // 1 day in milliseconds
   }
 }));
 
